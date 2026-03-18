@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --surface: #1a1a1a;
+  --foreground: #ffffff;
+  --muted: #a3a3a3;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.12), transparent 34%),
+    radial-gradient(circle at 85% 22%, rgba(56, 189, 248, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%),
+    var(--background);
+  color: var(--foreground);
+  font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.85), rgba(2, 132, 199, 0.85));
+}
+
+canvas {
+  display: block;
+}
+
+a {
+  text-decoration: none;
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[2rem] border border-white/10 bg-white/[0.05] shadow-glass backdrop-blur-2xl;
+  }
+
+  .button-primary {
+    @apply inline-flex items-center justify-center rounded-full border border-accent-300/20 bg-accent-500 px-6 py-3 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-accent-400 hover:shadow-glow;
+  }
+
+  .button-secondary {
+    @apply inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-medium text-white/80 transition hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.08] hover:text-white;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-300 via-white to-accent-400 bg-clip-text text-transparent;
+  }
+}
