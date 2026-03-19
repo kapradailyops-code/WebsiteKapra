@@ -11,20 +11,7 @@ export const EASE = {
   reveal: "expo.out"
 } as const;
 
-export const CANVAS_SEQUENCE = {
-  frameCount: 225,
-  pinScrollScreens: 2.75,
-  mobilePinScrollScreens: 1.6,
-  scrub: 0.5,
-  mobileScrub: 0.18,
-  batchSize: 16,
-  mobileBatchSize: 8,
-  mobileFrameStep: 2,
-  mobileMaxPixelRatio: 0.95,
-  mobileProgressStep: 4,
-  start: "top top",
-  end: "bottom bottom"
-} as const;
+
 
 export const SCROLL_OFFSETS = {
   revealStart: "top 78%",

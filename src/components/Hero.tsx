@@ -1,8 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Globe2, Smartphone, Sparkles, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Globe2, Smartphone, Sparkles, X } from "lucide-react";
 import { GlowBox } from "./GlowBox";
-import { GlowingEffect } from "./GlowingEffect";
 import { cn } from "../lib/utils";
 
 const capabilityChips = ["Launch sites", "Mobile products", "AI workflows"];
@@ -115,125 +114,176 @@ export function Hero() {
     <>
       <section
         id="top"
-        className="relative isolate flex min-h-[calc(100vh-4.5rem)] items-center overflow-hidden px-6 pb-20 pt-16 sm:px-10 lg:px-14"
+        className="relative isolate flex min-h-screen items-center overflow-hidden px-6 pb-10 pt-20 sm:px-10 lg:px-14"
       >
+        {/* Deep space background */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(56,189,248,0.18),transparent_24%),radial-gradient(circle_at_18%_28%,rgba(14,165,233,0.12),transparent_22%),radial-gradient(circle_at_82%_24%,rgba(125,211,252,0.08),transparent_18%)]" />
-          <motion.div
-            animate={{ x: ["-8%", "4%", "-8%"], opacity: [0.24, 0.38, 0.24] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-y-[-10%] left-1/2 w-[52rem] -translate-x-1/2 bg-[linear-gradient(115deg,transparent_0%,rgba(125,211,252,0.12)_22%,rgba(14,165,233,0.04)_42%,transparent_62%)] blur-3xl"
-          />
-          <motion.div
-            animate={{ y: [0, -24, 0], scale: [1, 1.05, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-[10%] top-[18%] h-48 w-48 rounded-full bg-accent-500/10 blur-[120px]"
-          />
-          <motion.div
-            animate={{ y: [0, 18, 0], scale: [1, 0.94, 1] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute right-[8%] top-[20%] h-56 w-56 rounded-full bg-cyan-200/10 blur-[140px]"
-          />
+          {/* Star field */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(30,58,138,0.35),transparent_50%),radial-gradient(ellipse_at_70%_60%,rgba(7,89,133,0.2),transparent_50%)]" />
+          {/* Nebula bloom */}
+          <div className="absolute left-[55%] top-[10%] h-[70vh] w-[70vh] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.07)_0%,rgba(14,165,233,0.04)_40%,transparent_70%)] blur-2xl" />
+          {/* Gold diagonal lines — Aetheria signature */}
+          <svg className="absolute inset-0 h-full w-full opacity-[0.06]" aria-hidden>
+            <line x1="60%" y1="0%" x2="100%" y2="55%" stroke="#f59e0b" strokeWidth="1" />
+            <line x1="65%" y1="0%" x2="100%" y2="45%" stroke="#f59e0b" strokeWidth="0.5" />
+            <line x1="55%" y1="0%" x2="95%" y2="60%" stroke="#f59e0b" strokeWidth="0.5" />
+            <line x1="100%" y1="30%" x2="50%" y2="100%" stroke="#f59e0b" strokeWidth="1" />
+            <line x1="100%" y1="20%" x2="45%" y2="100%" stroke="#f59e0b" strokeWidth="0.5" />
+          </svg>
+          {/* Ambient cyan orbs */}
+          <div className="absolute left-[10%] top-[18%] h-48 w-48 rounded-full bg-accent-500/10 blur-[120px]" />
+          <div className="absolute right-[8%] top-[20%] h-56 w-56 rounded-full bg-cyan-200/8 blur-[140px]" />
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center text-center">
+        <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+
+          {/* ── LEFT: Glassmorphism card ── */}
           <motion.div
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 font-mono text-[0.72rem] uppercase tracking-[0.32em] text-white/72 backdrop-blur-xl"
+            initial={{ opacity: 0, x: -28 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-2xl sm:p-8 lg:p-10"
           >
-            <span className="h-2.5 w-2.5 rounded-full bg-accent-400 shadow-[0_0_18px_rgba(56,189,248,0.85)]" />
-            Kapra launch studio
-          </motion.div>
+            {/* Company badge */}
+            <div className="mb-4 inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-300" />
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.32em] text-white/60">Kapra Web AI</span>
+            </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.08 }}
-            className="mt-8 max-w-5xl font-display text-[clamp(3.5rem,8vw,6.75rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-white"
-          >
-            Stage your next
-            <br className="hidden sm:block" />
-            <span className="gradient-text">web, mobile, or AI product</span>
-          </motion.h1>
+            <h1 className="font-display text-[clamp(1.8rem,3.5vw,3.4rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-white">
+              Scalable Web, Mobile,{" "}
+              <span className="gradient-text">&amp; AI Development</span>{" "}
+              for Ambitious Brands
+            </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.16 }}
-            className="mt-7 max-w-3xl text-base leading-8 text-white/68 sm:text-lg"
-          >
-            Kapra builds digital experiences with cinematic restraint, clear systems,
-            and launch-ready execution. Bring the ambition. We will shape the surface,
-            the story, and the product around it.
-          </motion.p>
+            <p className="mt-3 text-sm leading-7 text-white/62 sm:text-base">
+              As a premier digital experience studio, Kapra delivers launch-ready
+              e-commerce and AI solutions. We combine clear systems with modern web
+              engineering to turn your vision into a high-converting digital product.
+            </p>
 
-          <motion.p
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.22 }}
-            className="mt-5 text-base text-accent-300"
-          >
-            <span className="font-semibold text-white">for antigravity</span> to decide on their own
-          </motion.p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {capabilityChips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/62 backdrop-blur-lg"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.28 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-3"
-          >
-            {capabilityChips.map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/62 backdrop-blur-lg"
-              >
-                {chip}
-              </span>
-            ))}
-          </motion.div>
-
-          <AnimatePresence initial={false}>
-            {!isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 14 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98, y: 4 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="relative mt-10 inline-block transform-gpu"
-              >
+            <AnimatePresence initial={false}>
+              {!isExpanded && (
                 <motion.div
-                  style={{ borderRadius: 9999 }}
-                  className="absolute inset-0 overflow-hidden border border-accent-300/25 bg-gradient-to-r from-accent-500 via-sky-500 to-cyan-400 shadow-glow"
+                  initial={{ opacity: 0, scale: 0.92, y: 14 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: 4 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="relative mt-5 inline-block transform-gpu"
                 >
-                  <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.2),transparent_30%,transparent_70%,rgba(255,255,255,0.1))]" />
+                  <button
+                    onClick={handleExpand}
+                    className="bg-zinc-100 text-zinc-900 border border-white/20 relative text-sm font-medium rounded-full h-12 p-1 ps-6 pe-14 flex items-center group transition-all duration-500 hover:ps-14 hover:pe-6 w-fit overflow-hidden cursor-pointer"
+                  >
+                    <span className="relative z-10 font-bold uppercase tracking-widest text-[0.7rem] transition-all duration-500">
+                      Let's Collaborate
+                    </span>
+                    <div className="absolute right-1 w-10 h-10 bg-brand-950 text-white rounded-full flex items-center justify-center transition-all duration-500 group-hover:right-[calc(100%-44px)] group-hover:rotate-45">
+                      <ArrowUpRight size={18} strokeWidth={2.5} />
+                    </div>
+                  </button>
                 </motion.div>
-
-                <motion.button
-                  onClick={handleExpand}
-                  whileTap={{ scale: 0.985 }}
-                  transition={{ duration: 0.12, ease: "easeOut" }}
-                  className="relative inline-flex h-14 items-center gap-3 px-8 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:opacity-95"
-                >
-                  Start your journey
-                  <ArrowRight className="h-4 w-4" />
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.div
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-8"
-          >
-            <a href="#journey" className="text-sm text-white/48 transition hover:text-white/78">
-              Or scroll into the cinematic sequence
-            </a>
+              )}
+            </AnimatePresence>
           </motion.div>
+
+          {/* ── RIGHT: Glowing Geometric Crystal ── */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+            className="relative hidden lg:flex items-center justify-center"
+          >
+            {/* Outer glow rings */}
+            <div className="absolute h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.18)_0%,transparent_65%)]" />
+            <div className="absolute h-[320px] w-[320px] rounded-full border border-cyan-400/10 animate-[spin_30s_linear_infinite]" />
+            <div className="absolute h-[280px] w-[280px] rounded-full border border-cyan-300/8 animate-[spin_20s_linear_infinite_reverse]" />
+
+            {/* Crystal SVG */}
+            <svg viewBox="0 0 320 420" className="relative z-10 h-[420px] w-[320px] drop-shadow-[0_0_80px_rgba(56,189,248,0.6)]" aria-hidden>
+              <defs>
+                <linearGradient id="crystalTop" x1="50%" y1="0%" x2="50%" y2="100%">
+                  <stop offset="0%" stopColor="#e0f7ff" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.6" />
+                </linearGradient>
+                <linearGradient id="crystalMid" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.3" />
+                </linearGradient>
+                <linearGradient id="crystalBot" x1="50%" y1="0%" x2="50%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#e0f7ff" stopOpacity="0.9" />
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+                <filter id="glowStrong">
+                  <feGaussianBlur stdDeviation="8" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+
+              {/* Circuit lines */}
+              <g stroke="#38bdf8" strokeWidth="0.6" opacity="0.3" fill="none">
+                <line x1="160" y1="60" x2="80" y2="30" /><line x1="160" y1="60" x2="240" y2="30" />
+                <line x1="160" y1="360" x2="80" y2="390" /><line x1="160" y1="360" x2="240" y2="390" />
+                <line x1="60" y1="210" x2="20" y2="180" /><line x1="60" y1="210" x2="20" y2="240" />
+                <line x1="260" y1="210" x2="300" y2="180" /><line x1="260" y1="210" x2="300" y2="240" />
+                <circle cx="80" cy="30" r="2" fill="#7dd3fc" /><circle cx="240" cy="30" r="2" fill="#7dd3fc" />
+                <circle cx="80" cy="390" r="2" fill="#7dd3fc" /><circle cx="240" cy="390" r="2" fill="#7dd3fc" />
+                <circle cx="20" cy="180" r="2" fill="#7dd3fc" /><circle cx="20" cy="240" r="2" fill="#7dd3fc" />
+                <circle cx="300" cy="180" r="2" fill="#7dd3fc" /><circle cx="300" cy="240" r="2" fill="#7dd3fc" />
+              </g>
+
+              {/* Upper diamond */}
+              <polygon points="160,20 220,120 160,145 100,120" fill="url(#crystalTop)" filter="url(#glow)" opacity="0.9" />
+              <polygon points="160,20 100,120 160,145" fill="#bae6fd" opacity="0.3" />
+              <polygon points="160,20 220,120 160,145" fill="#0ea5e9" opacity="0.2" />
+
+              {/* Mid belt */}
+              <polygon points="100,120 220,120 260,210 160,240 60,210" fill="url(#crystalMid)" filter="url(#glow)" opacity="0.85" />
+              <line x1="160" y1="145" x2="160" y2="210" stroke="#e0f7ff" strokeWidth="1" opacity="0.8" />
+              <line x1="100" y1="120" x2="160" y2="210" stroke="#7dd3fc" strokeWidth="0.8" opacity="0.5" />
+              <line x1="220" y1="120" x2="160" y2="210" stroke="#7dd3fc" strokeWidth="0.8" opacity="0.5" />
+
+              {/* Lower diamond */}
+              <polygon points="60,210 160,240 260,210 160,295" fill="url(#crystalMid)" filter="url(#glow)" opacity="0.8" />
+              <polygon points="160,240 60,210 160,295" fill="#0ea5e9" opacity="0.25" />
+              <polygon points="160,240 260,210 160,295" fill="#bae6fd" opacity="0.25" />
+
+              {/* Bottom tip */}
+              <polygon points="100,295 220,295 160,400" fill="url(#crystalBot)" filter="url(#glow)" opacity="0.9" />
+              <line x1="160" y1="295" x2="160" y2="400" stroke="#e0f7ff" strokeWidth="1" opacity="0.7" />
+
+              {/* Core glow */}
+              <ellipse cx="160" cy="210" rx="22" ry="28" fill="white" filter="url(#glowStrong)" opacity="0.9" />
+              <ellipse cx="160" cy="210" rx="10" ry="13" fill="#e0f7ff" opacity="1" />
+
+              {/* Edge highlights */}
+              <line x1="160" y1="20" x2="220" y2="120" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
+              <line x1="160" y1="20" x2="100" y2="120" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
+              <line x1="160" y1="400" x2="220" y2="295" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
+              <line x1="160" y1="400" x2="100" y2="295" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
+            </svg>
+
+            {/* Floating orb behind crystal */}
+            <div className="absolute h-40 w-40 rounded-full bg-cyan-400/20 blur-2xl" />
+          </motion.div>
+
         </div>
+
       </section>
 
       <AnimatePresence initial={false}>
@@ -247,7 +297,7 @@ export function Hero() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
               onClick={handleClose}
-              className="absolute inset-0 bg-brand-950/78 backdrop-blur-2xl"
+              className="absolute inset-0 bg-brand-950/90 backdrop-blur-md"
             />
 
             <motion.div
@@ -261,26 +311,14 @@ export function Hero() {
               <div className="pointer-events-none absolute inset-0">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(14,165,233,0.26),transparent_26%),radial-gradient(circle_at_84%_18%,rgba(125,211,252,0.12),transparent_18%),linear-gradient(135deg,rgba(10,10,10,0.22),rgba(10,10,10,0.66))]" />
                 <div className="absolute inset-0 bg-grid [background-size:68px_68px] opacity-[0.1]" />
-                <motion.div
-                  animate={{ rotate: [0, 6, 0], scale: [1, 1.04, 1] }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                <div
                   className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-accent-500/14 blur-[140px]"
                 />
-                <motion.div
-                  animate={{ y: [0, 24, 0], x: [0, -18, 0] }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+                <div
                   className="absolute bottom-[-3rem] right-[-2rem] h-80 w-80 rounded-full bg-cyan-200/10 blur-[150px]"
                 />
               </div>
-              <GlowingEffect
-                blur={18}
-                borderWidth={2}
-                glow
-                inactiveZone={0.22}
-                movementDuration={0.9}
-                proximity={96}
-                spread={42}
-              />
+
 
               <button
                 onClick={handleClose}
@@ -289,7 +327,7 @@ export function Hero() {
                 <X className="h-5 w-5" />
               </button>
 
-              <div className="relative z-10 grid h-full w-full overflow-y-auto overscroll-contain lg:grid-cols-[1.05fr_0.95fr]">
+              <div data-lenis-prevent="true" className="relative z-10 grid h-full w-full overflow-y-auto overscroll-contain lg:grid-cols-[1.05fr_0.95fr]">
                 <motion.div
                   initial={{ opacity: 0, x: -18 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -302,7 +340,7 @@ export function Hero() {
                       Discovery intake
                     </div>
 
-                    <h2 className="mt-7 max-w-xl font-display text-[clamp(2.6rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-white">
+                    <h2 className="mt-7 max-w-xl font-display text-[clamp(2rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-white">
                       Ready to give the next launch real gravity?
                     </h2>
 
@@ -355,7 +393,7 @@ export function Hero() {
                   transition={{ duration: 0.18, delay: 0.02, ease: "easeOut" }}
                   className="flex items-start justify-center border-t border-white/10 bg-black/20 p-4 sm:p-8 lg:border-l lg:border-t-0 lg:bg-black/10"
                 >
-                  <GlowBox className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 shadow-[0_20px_80px_rgba(2,6,23,0.38)] backdrop-blur-2xl sm:p-8">
+                  <GlowBox className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 shadow-[0_20px_80px_rgba(2,6,23,0.38)] backdrop-blur-md sm:p-8">
                     {formStep === "success" ? (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.94 }}
@@ -456,7 +494,7 @@ export function Hero() {
                                   inputClassName,
                                   "group flex cursor-pointer items-center justify-between gap-3 pr-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl",
                                   isScopeOpen &&
-                                    "border-accent-300/55 bg-white/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
+                                  "border-accent-300/55 bg-white/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
                                 )}
                               >
                                 <span className="truncate text-white/88">{selectedScope}</span>

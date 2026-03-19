@@ -10,10 +10,6 @@
   --muted: #a3a3a3;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   min-height: 100vh;
   overflow-x: hidden;
@@ -51,6 +47,13 @@ canvas {
 
 a {
   text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 @layer components {

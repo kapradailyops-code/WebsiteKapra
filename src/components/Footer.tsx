@@ -1,86 +1,123 @@
-const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@kapraweb.ai";
-const phone = process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+91-98765-43210";
-const location = process.env.NEXT_PUBLIC_CONTACT_LOCATION ?? "Vytilla, Kochi";
+"use client";
+import React from "react";
+import type { ComponentProps, ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { FacebookIcon, FrameIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from "lucide-react";
 
-const socialLinks = [
+interface FooterLink {
+  title: string;
+  href: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+interface FooterSection {
+  label: string;
+  links: FooterLink[];
+}
+
+const footerLinks: FooterSection[] = [
   {
-    label: "LinkedIn",
-    href: process.env.NEXT_PUBLIC_LINKEDIN_URL ?? "#"
+    label: "Product",
+    links: [
+      { title: "Features", href: "#features" },
+      { title: "Pricing", href: "#pricing" },
+      { title: "Testimonials", href: "#testimonials" },
+      { title: "Integration", href: "/" },
+    ],
   },
   {
-    label: "X",
-    href: process.env.NEXT_PUBLIC_TWITTER_URL ?? "#"
+    label: "Company",
+    links: [
+      { title: "FAQs", href: "/faqs" },
+      { title: "About Us", href: "/about" },
+      { title: "Privacy Policy", href: "/privacy" },
+      { title: "Terms of Services", href: "/terms" },
+    ],
   },
   {
-    label: "Instagram",
-    href: process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "#"
-  }
-];
-
-const serviceLinks = [
-  { label: "Journey", href: "#journey" },
-  { label: "Services", href: "#services" },
-  { label: "Contact", href: "#contact" }
+    label: "Resources",
+    links: [
+      { title: "Blog", href: "/blog" },
+      { title: "Changelog", href: "/changelog" },
+      { title: "Brand", href: "/brand" },
+      { title: "Help", href: "/help" },
+    ],
+  },
+  {
+    label: "Social Links",
+    links: [
+      { title: "Facebook", href: "#", icon: FacebookIcon },
+      { title: "Instagram", href: "#", icon: InstagramIcon },
+      { title: "Youtube", href: "#", icon: YoutubeIcon },
+      { title: "LinkedIn", href: "#", icon: LinkedinIcon },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
-    <footer id="contact" className="border-t border-white/10 px-6 py-16 sm:px-10 lg:px-14">
-      <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-        <div>
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.45em] text-accent-300/85">
-            Kapra Web AI Makers Pvt. Ltd.
+    <footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t border-white/10 bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
+      <div className="bg-white/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
+
+      <div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
+        <AnimatedContainer className="space-y-4">
+          <FrameIcon className="size-8 text-white/80" />
+          <p className="text-white/60 mt-8 text-sm md:mt-0">
+            © {new Date().getFullYear()} Kapra Web AI. All rights reserved.
           </p>
-          <h2 className="mt-5 max-w-xl font-display text-4xl leading-tight text-white">
-            Premium digital experiences for teams that want velocity without visual compromise.
-          </h2>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-white/70">
-            Built for Kapra Web AI Makers Pvt. Ltd., a subsidiary of Kapra Highness
-            Ventures. Founded in 2024 and staged from {location}.
-          </p>
+        </AnimatedContainer>
+
+        <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4 xl:col-span-2 xl:mt-0">
+          {footerLinks.map((section, index) => (
+            <AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
+              <div className="mb-10 md:mb-0">
+                <h3 className="font-mono text-[0.68rem] uppercase tracking-[0.28em] text-white/55">
+                  {section.label}
+                </h3>
+                <ul className="mt-4 space-y-3 text-sm text-white/60">
+                  {section.links.map((link) => (
+                    <li key={link.title}>
+                      <a
+                        href={link.href}
+                        className="inline-flex items-center font-body transition-all duration-300 hover:text-white"
+                      >
+                        {link.icon && <link.icon className="me-2 size-4" />}
+                        {link.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </AnimatedContainer>
+          ))}
         </div>
-
-        <div>
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.35em] text-white/45">
-            Navigate
-          </p>
-          <div className="mt-5 flex flex-col gap-3">
-            {serviceLinks.map((link) => (
-              <a key={link.href} href={link.href} className="text-white/70 transition hover:text-white">
-                {link.label}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.35em] text-white/45">
-            Contact
-          </p>
-          <div className="mt-5 flex flex-col gap-3 text-white/70">
-            <a href={`mailto:${email}`} className="transition hover:text-white">
-              {email}
-            </a>
-            <a href={`tel:${phone.replace(/\s+/g, "")}`} className="transition hover:text-white">
-              {phone}
-            </a>
-            <span>{location}</span>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            {socialLinks.map((link) => (
-              <a key={link.label} href={link.href} className="button-secondary px-4 py-2 text-sm">
-                {link.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto mt-14 flex max-w-7xl flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/45 sm:flex-row sm:items-center sm:justify-between">
-        <p>For antigravity to decide on their own.</p>
-        <p>{new Date().getFullYear()} Kapra Web AI Makers Pvt. Ltd.</p>
       </div>
     </footer>
+  );
+}
+
+type ViewAnimationProps = {
+  delay?: number;
+  className?: ComponentProps<typeof motion.div>["className"];
+  children: ReactNode;
+};
+
+function AnimatedContainer({ className, delay = 0.1, children }: ViewAnimationProps) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (shouldReduceMotion) {
+    return <div className={className as string}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      initial={{ filter: "blur(4px)", translateY: -8, opacity: 0 }}
+      whileInView={{ filter: "blur(0px)", translateY: 0, opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay, duration: 0.8 }}
+      className={className as string}
+    >
+      {children}
+    </motion.div>
   );
 }

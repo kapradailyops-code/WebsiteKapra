@@ -1,12 +1,27 @@
+import Link from "next/link";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { PropsWithChildren } from "react";
+import { Home, Layers, Briefcase, Mail } from "lucide-react";
 import { GlobalLighting } from "./GlobalLighting";
+import { NavBar } from "./NavBar";
+import { ChatWidget } from "./ChatWidget";
 
-const navigationItems = [
-  { label: "Journey", href: "#journey" },
-  { label: "Services", href: "#services" },
-  { label: "Contact", href: "#contact" }
+const navItems = [
+  { name: "Home", url: "/", icon: Home },
+  { name: "Services", url: "/services", icon: Layers },
+  { name: "Careers", url: "/careers", icon: Briefcase },
+  { name: "Contact", url: "/contact", icon: Mail },
 ];
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <SpeedInsights /> 
+      </body>
+    </html>
+  );
+}
 export function Layout({ children }: PropsWithChildren) {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-brand-950 text-white">
@@ -25,23 +40,12 @@ export function Layout({ children }: PropsWithChildren) {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-brand-950/65 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-10 lg:px-14">
-          <a href="#top" className="font-display text-sm uppercase tracking-[0.35em] text-white/90">
-            Kapra Web AI
-          </a>
+      <NavBar items={navItems} />
 
-          <nav className="hidden items-center gap-6 text-sm text-white/65 sm:flex">
-            {navigationItems.map((item) => (
-              <a key={item.href} href={item.href} className="transition hover:text-white">
-                {item.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </header>
-
-      <main id="main">{children}</main>
+      <main id="main" className="relative">
+        {children}
+      </main>
+      <ChatWidget />
     </div>
   );
 }
