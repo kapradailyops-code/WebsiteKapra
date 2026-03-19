@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, Globe2, Smartphone, Sparkles } from "lucide-react";
 import { GlowBox } from "./GlowBox";
+import { buildInquiryPayload, inquiryScopeOptions, submitInquiry } from "../lib/inquiry";
 import { cn } from "../lib/utils";
 
 const experienceTracks = [
@@ -27,28 +28,42 @@ const experienceTracks = [
   },
 ];
 
-const scopeOptions = [
-  "Launch site",
-  "Marketing website",
-  "Mobile app",
-  "AI workflow",
-  "Mixed project",
-];
+const scopeOptions = inquiryScopeOptions;
 
 const inputClassName =
   "w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-body text-sm text-white placeholder:text-white/35 outline-none transition focus:border-accent-300/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-accent-400/20";
 
 export function ContactForm() {
   const [formStep, setFormStep] = useState<"idle" | "submitting" | "success">("idle");
-  const [selectedScope, setSelectedScope] = useState(scopeOptions[0]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedScope, setSelectedScope] = useState<(typeof scopeOptions)[number]>(
+    scopeOptions[0]
+  );
   const [isScopeOpen, setIsScopeOpen] = useState(false);
   const scopeFieldRef = useRef<HTMLDivElement>(null);
   const scopeListId = useId();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsScopeOpen(false);
     setFormStep("submitting");
-    window.setTimeout(() => setFormStep("success"), 1400);
+    setErrorMessage(null);
+
+    const form = event.currentTarget;
+
+    try {
+      await submitInquiry(buildInquiryPayload(form, selectedScope));
+      form.reset();
+      setSelectedScope(scopeOptions[0]);
+      setFormStep("success");
+    } catch (error) {
+      setFormStep("idle");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to send your inquiry right now. Please try again shortly."
+      );
+    }
   };
 
   useEffect(() => {
@@ -148,14 +163,28 @@ export function ContactForm() {
                   <label htmlFor="name" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
                     Full name
                   </label>
-                  <input required id="name" type="text" placeholder="Jane Doe" className={inputClassName} />
+                  <input
+                    required
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Jane Doe"
+                    className={inputClassName}
+                  />
                 </div>
 
                 <div>
                   <label htmlFor="email" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
                     Work email
                   </label>
-                  <input required id="email" type="email" placeholder="jane@company.com" className={inputClassName} />
+                  <input
+                    required
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="jane@company.com"
+                    className={inputClassName}
+                  />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -163,7 +192,13 @@ export function ContactForm() {
                     <label htmlFor="company" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
                       Company
                     </label>
-                    <input id="company" type="text" placeholder="Kapra partner" className={inputClassName} />
+                    <input
+                      id="company"
+                      name="company"
+                      type="text"
+                      placeholder="Kapra partner"
+                      className={inputClassName}
+                    />
                   </div>
 
                   <div ref={scopeFieldRef} className="relative">
@@ -238,6 +273,7 @@ export function ContactForm() {
                   </label>
                   <textarea
                     id="summary"
+                    name="summary"
                     rows={4}
                     placeholder="A new launch, a redesign, a mobile product, an AI workflow, or a hybrid of all three."
                     className={`${inputClassName} resize-none`}
@@ -262,6 +298,12 @@ export function ContactForm() {
                   </>
                 )}
               </button>
+
+              {errorMessage ? (
+                <p role="alert" className="rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100">
+                  {errorMessage}
+                </p>
+              ) : null}
 
               <p className="text-center text-xs leading-6 text-white/42">
                 This demo form is front-end only for now. We can wire it to email, CRM, or your own backend next.
