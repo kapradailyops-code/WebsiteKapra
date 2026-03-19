@@ -16,7 +16,17 @@ type HubSpotErrorResponse = {
   errors?: Array<{ message?: string }>;
 };
 
-const HUBSPOT_SUBMIT_URL =
+type HubSpotSubmitResult =
+  | { ok: true }
+  | {
+      ok: false;
+      status: number;
+      message: string;
+    };
+
+const HUBSPOT_PUBLIC_SUBMIT_URL =
+  "https://api.hsforms.com/submissions/v3/integration/submit";
+const HUBSPOT_SECURE_SUBMIT_URL =
   "https://api.hsforms.com/submissions/v3/integration/secure/submit";
 
 function readEnv(name: string, fallback?: string) {
@@ -148,6 +158,63 @@ function getHubSpotErrorMessage(data: HubSpotErrorResponse | null) {
   return null;
 }
 
+function shouldRetryWithoutAuth(result: HubSpotSubmitResult) {
+  if (result.ok) {
+    return false;
+  }
+
+  if (result.status !== 401 && result.status !== 403) {
+    return false;
+  }
+
+  const normalizedMessage = result.message.toLowerCase();
+  return (
+    normalizedMessage.includes("authentication credential") ||
+    normalizedMessage.includes("proper permissions") ||
+    normalizedMessage.includes("scope")
+  );
+}
+
+async function submitToHubSpot(
+  portalId: string,
+  formId: string,
+  payload: Record<string, unknown>,
+  accessToken?: string | null
+): Promise<HubSpotSubmitResult> {
+  const url = accessToken
+    ? `${HUBSPOT_SECURE_SUBMIT_URL}/${portalId}/${formId}`
+    : `${HUBSPOT_PUBLIC_SUBMIT_URL}/${portalId}/${formId}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (response.ok) {
+    return { ok: true };
+  }
+
+  let errorData: HubSpotErrorResponse | null = null;
+
+  try {
+    errorData = (await response.json()) as HubSpotErrorResponse;
+  } catch {
+    errorData = null;
+  }
+
+  return {
+    ok: false,
+    status: response.status,
+    message:
+      getHubSpotErrorMessage(errorData) ??
+      "HubSpot rejected the inquiry. Check your form ID and field mappings.",
+  };
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ContactApiResponse>
@@ -157,14 +224,13 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed." });
   }
 
-  const accessToken = readRequiredEnv("HUBSPOT_ACCESS_TOKEN");
+  const accessToken = readEnv("HUBSPOT_ACCESS_TOKEN");
   const portalId = readRequiredEnv("HUBSPOT_PORTAL_ID");
   const formId = readRequiredEnv("HUBSPOT_FORM_ID");
 
-  if (!accessToken || !portalId || !formId) {
+  if (!portalId || !formId) {
     return res.status(500).json({
-      error:
-        "HubSpot is not configured yet. Add HUBSPOT_ACCESS_TOKEN, HUBSPOT_PORTAL_ID, and HUBSPOT_FORM_ID.",
+      error: "HubSpot is not configured yet. Add HUBSPOT_PORTAL_ID and HUBSPOT_FORM_ID.",
     });
   }
 
@@ -220,30 +286,15 @@ export default async function handler(
     ...(Object.keys(context).length > 0 ? { context } : {}),
   };
 
-  const hubspotResponse = await fetch(`${HUBSPOT_SUBMIT_URL}/${portalId}/${formId}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  let hubspotResult = await submitToHubSpot(portalId, formId, payload, accessToken);
 
-  if (!hubspotResponse.ok) {
-    let errorData: HubSpotErrorResponse | null = null;
+  if (shouldRetryWithoutAuth(hubspotResult)) {
+    hubspotResult = await submitToHubSpot(portalId, formId, payload);
+  }
 
-    try {
-      errorData = (await hubspotResponse.json()) as HubSpotErrorResponse;
-    } catch {
-      errorData = null;
-    }
-
-    const errorMessage =
-      getHubSpotErrorMessage(errorData) ??
-      "HubSpot rejected the inquiry. Check your form ID and field mappings.";
-
-    return res.status(hubspotResponse.status >= 500 ? 502 : 400).json({
-      error: errorMessage,
+  if (!hubspotResult.ok) {
+    return res.status(hubspotResult.status >= 500 ? 502 : 400).json({
+      error: hubspotResult.message,
     });
   }
 
