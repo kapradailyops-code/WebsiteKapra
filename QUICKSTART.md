@@ -6,7 +6,19 @@
 npm install
 ```
 
-## 2. Start development
+## 2. Create local env file
+
+```bash
+Copy-Item .env.example .env.local
+```
+
+Minimum contact-form setup:
+
+- Set `HUBSPOT_PORTAL_ID`
+- Set `HUBSPOT_FORM_ID`
+- Optionally set `HUBSPOT_ACCESS_TOKEN` if you want to try HubSpot's secure submit endpoint first
+
+## 3. Start development
 
 ```bash
 npm run dev
@@ -14,7 +26,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## 3. Optional: add JPEG frames
+## 4. Optional: add JPEG frames
 
 Put files in `public/frames` with zero-padded names:
 
@@ -36,7 +48,7 @@ If you want a test sequence:
 node scripts/create-sample-frames.js --count 120
 ```
 
-## 4. Build for production
+## 5. Build for production
 
 ```bash
 npm run build

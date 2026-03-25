@@ -1,4 +1,4 @@
-import { readdir } from "fs/promises";
+import { readFile, readdir } from "fs/promises";
 import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -7,12 +7,30 @@ interface LogoFile {
   src: string;
 }
 
-function formatLogoName(fileName: string) {
-  return fileName
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function formatLogoName(fileName: string, svgMarkup?: string) {
+  const titleMatch = svgMarkup?.match(/<title>([^<]+)<\/title>/i);
+
+  if (titleMatch?.[1]) {
+    return decodeHtmlEntities(titleMatch[1].trim());
+  }
+
+  const fallbackName = fileName
     .replace(/\.svg$/i, "")
     .replace(/^\d+[-_ ]*/, "")
+    .replace(/dot/g, ".")
     .replace(/[-_]+/g, " ")
     .trim();
+
+  return fallbackName.replace(/\b([a-z])/g, (match) => match.toUpperCase());
 }
 
 export default async function handler(
@@ -28,14 +46,21 @@ export default async function handler(
   try {
     const entries = await readdir(logosDirectory, { withFileTypes: true });
 
-    const logos = entries
+    const fileNames = entries
       .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".svg"))
       .map((entry) => entry.name)
-      .sort((left, right) => left.localeCompare(right))
-      .map((fileName) => ({
-        name: formatLogoName(fileName),
-        src: `/carousel-logos/${encodeURIComponent(fileName)}`
-      }));
+      .sort((left, right) => left.localeCompare(right));
+
+    const logos = await Promise.all(
+      fileNames.map(async (fileName) => {
+        const svgMarkup = await readFile(path.join(logosDirectory, fileName), "utf8");
+
+        return {
+          name: formatLogoName(fileName, svgMarkup),
+          src: `/carousel-logos/${encodeURIComponent(fileName)}`
+        };
+      })
+    );
 
     return res.status(200).json({ logos });
   } catch (error) {

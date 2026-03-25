@@ -100,15 +100,31 @@ function pushField(fields: HubSpotField[], name: string | undefined, value: stri
   fields.push({ name, value });
 }
 
-function buildMessageValue(scope: string, summary: string) {
+function buildMessageValue(inquiry: InquiryPayload) {
   const sections: string[] = [];
 
-  if (scope) {
-    sections.push(`Project scope: ${scope}`);
+  if (inquiry.company) {
+    sections.push(`Company: ${inquiry.company}`);
   }
 
-  if (summary) {
-    sections.push(summary);
+  if (inquiry.scope) {
+    sections.push(`Project scope: ${inquiry.scope}`);
+  }
+
+  if (inquiry.summary) {
+    sections.push(`Summary:\n${inquiry.summary}`);
+  }
+
+  if (inquiry.formSource) {
+    sections.push(`Form source: ${inquiry.formSource}`);
+  }
+
+  if (inquiry.pageName) {
+    sections.push(`Page name: ${inquiry.pageName}`);
+  }
+
+  if (inquiry.pageUri) {
+    sections.push(`Page URL: ${inquiry.pageUri}`);
   }
 
   return sections.join("\n\n");
@@ -132,7 +148,11 @@ function buildHubSpotFields(inquiry: InquiryPayload) {
   const scopeField = readEnv("HUBSPOT_FIELD_SCOPE");
   pushField(fields, scopeField, inquiry.scope);
 
-  const messageValue = buildMessageValue(scopeField ? "" : inquiry.scope, inquiry.summary);
+  pushField(fields, readEnv("HUBSPOT_FIELD_FORM_SOURCE"), inquiry.formSource ?? "");
+  pushField(fields, readEnv("HUBSPOT_FIELD_PAGE_NAME"), inquiry.pageName ?? "");
+  pushField(fields, readEnv("HUBSPOT_FIELD_PAGE_URI"), inquiry.pageUri ?? "");
+
+  const messageValue = buildMessageValue(inquiry);
   pushField(fields, readEnv("HUBSPOT_FIELD_MESSAGE", "message"), messageValue);
 
   return fields;
@@ -243,6 +263,7 @@ export default async function handler(
     company: asString(requestBody.company),
     scope: asString(requestBody.scope),
     summary: asString(requestBody.summary),
+    formSource: asString(requestBody.formSource) || undefined,
     pageUri: asString(requestBody.pageUri) || undefined,
     pageName: asString(requestBody.pageName) || undefined,
   };

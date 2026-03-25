@@ -8,18 +8,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        background: "rgb(var(--background-rgb) / <alpha-value>)",
+        surface: "rgb(var(--surface-rgb) / <alpha-value>)",
+        foreground: "rgb(var(--foreground-rgb) / <alpha-value>)",
+        muted: "rgb(var(--muted-rgb) / <alpha-value>)",
+        border: {
+          light: "var(--border-light)"
+        },
         brand: {
-          950: "#0A0A0A",
-          900: "#111111",
+          50: "#ffffff",
+          100: "#f3f3f3",
+          700: "#232323",
           800: "#1A1A1A",
-          700: "#232323"
+          900: "#111111",
+          950: "#0A0A0A"
         },
         accent: {
-          300: "#7DD3FC",
-          400: "#38BDF8",
-          500: "#0EA5E9",
-          600: "#0284C7",
-          700: "#0369A1"
+          300: "rgb(var(--accent-300) / <alpha-value>)",
+          400: "rgb(var(--accent-400) / <alpha-value>)",
+          500: "rgb(var(--accent-500) / <alpha-value>)",
+          600: "rgb(var(--accent-600) / <alpha-value>)",
+          700: "rgb(var(--accent-700) / <alpha-value>)"
         },
         mist: {
           100: "#F5F9FF",
@@ -28,12 +37,12 @@ module.exports = {
         }
       },
       fontFamily: {
-        display: ["Sora", "Space Grotesk", "Avenir Next", "Segoe UI", "sans-serif"],
-        body: ["Space Grotesk", "Avenir Next", "Segoe UI", "sans-serif"],
-        mono: ["JetBrains Mono", "Consolas", "monospace"]
+        display: ["Bricolage Grotesque", "system-ui", "-apple-system", "sans-serif"],
+        body: ["Bricolage Grotesque", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["Space Mono", "JetBrains Mono", "Consolas", "monospace"]
       },
       boxShadow: {
-        glow: "0 20px 80px rgba(14, 165, 233, 0.18)",
+        glow: "0 20px 80px rgba(229, 168, 75, 0.22)",
         glass: "0 10px 40px rgba(2, 6, 23, 0.35)"
       },
       backgroundImage: {

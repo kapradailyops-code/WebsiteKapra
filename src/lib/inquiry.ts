@@ -12,6 +12,7 @@ export type InquiryPayload = {
   company: string;
   scope: string;
   summary: string;
+  formSource?: string;
   pageUri?: string;
   pageName?: string;
 };
@@ -30,6 +31,7 @@ export function buildInquiryPayload(
   selectedScope: string
 ): InquiryPayload {
   const formData = new FormData(form);
+  const formSource = form.dataset.formSource?.trim();
 
   return {
     name: getFormValue(formData, "name"),
@@ -37,6 +39,7 @@ export function buildInquiryPayload(
     company: getFormValue(formData, "company"),
     scope: getFormValue(formData, "scope") || selectedScope,
     summary: getFormValue(formData, "summary"),
+    formSource: formSource || undefined,
     pageUri: typeof window === "undefined" ? undefined : window.location.href,
     pageName: typeof document === "undefined" ? undefined : document.title,
   };

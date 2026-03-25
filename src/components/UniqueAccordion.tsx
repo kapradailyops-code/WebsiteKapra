@@ -61,11 +61,11 @@ export function UniqueAccordion() {
                 className="w-full group relative"
                 initial={false}
               >
-                <div className="flex items-center gap-6 py-5 px-1">
+                <div className="flex items-center gap-6 py-5 px-1 relative">
                   {/* Number with animated circle */}
                   <div className="relative flex items-center justify-center w-10 h-10">
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-white/90"
+                      className="absolute inset-0 rounded-full bg-foreground/90"
                       initial={false}
                       animate={{
                         scale: isActive ? 1 : isHovered ? 0.85 : 0,
@@ -80,7 +80,7 @@ export function UniqueAccordion() {
                     <motion.span
                       className="relative z-10 font-mono text-sm font-medium tracking-[0.18em]"
                       animate={{
-                        color: isActive ? "#0a0a0a" : "rgba(255, 255, 255, 0.4)",
+                        color: isActive ? "var(--background)" : "var(--muted)",
                       }}
                       transition={{ duration: 0.2 }}
                     >
@@ -94,10 +94,10 @@ export function UniqueAccordion() {
                     animate={{
                       x: isActive || isHovered ? 4 : 0,
                       color: isActive
-                        ? "#ffffff"
+                        ? "var(--foreground)"
                         : isHovered
-                          ? "#ffffff"
-                          : "rgba(255, 255, 255, 0.6)",
+                          ? "var(--foreground)"
+                          : "var(--muted)",
                     }}
                     transition={{
                       type: "spring",
@@ -124,7 +124,7 @@ export function UniqueAccordion() {
                         height="16"
                         viewBox="0 0 16 16"
                         fill="none"
-                        className="text-white"
+                        className="text-foreground"
                         animate={{
                           opacity: isActive || isHovered ? 1 : 0.4,
                         }}
@@ -144,9 +144,9 @@ export function UniqueAccordion() {
                 </div>
 
                 {/* Animated underline */}
-                <motion.div className="absolute bottom-0 left-0 right-0 h-px bg-white/10 origin-left" initial={false} />
+                <motion.div className="absolute bottom-0 left-0 right-0 h-px bg-foreground/10 origin-left" initial={false} />
                 <motion.div
-                  className="absolute bottom-0 left-0 h-px bg-white origin-left"
+                  className="absolute bottom-0 left-0 h-px bg-foreground origin-left"
                   initial={{ scaleX: 0 }}
                   animate={{
                     scaleX: isActive ? 1 : isHovered ? 0.3 : 0,
@@ -183,7 +183,7 @@ export function UniqueAccordion() {
                     className="overflow-hidden"
                   >
                     <motion.p
-                      className="px-12 py-6 pl-16 font-body leading-relaxed text-white/70"
+                      className="px-12 py-6 pl-16 font-body leading-relaxed text-foreground/70"
                       initial={{ y: -6 }}
                       animate={{ y: 0 }}
                       exit={{ y: -6 }}

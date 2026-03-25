@@ -31,7 +31,7 @@ const experienceTracks = [
 const scopeOptions = inquiryScopeOptions;
 
 const inputClassName =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-body text-sm text-white placeholder:text-white/35 outline-none transition focus:border-accent-300/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-accent-400/20";
+  "w-full rounded-2xl border border-foreground/10 bg-foreground/[0.05] px-4 py-3 font-body text-sm text-foreground placeholder:text-foreground/35 outline-none transition focus:border-accent-300/40 focus:bg-foreground/[0.08] focus:ring-2 focus:ring-accent-400/20";
 
 export function ContactForm() {
   const [formStep, setFormStep] = useState<"idle" | "submitting" | "success">("idle");
@@ -43,6 +43,45 @@ export function ContactForm() {
   const scopeFieldRef = useRef<HTMLDivElement>(null);
   const scopeListId = useId();
 
+  const submitToHubSpot = async (payload: ReturnType<typeof buildInquiryPayload>) => {
+    const PORTAL_ID = "245587399";
+    const FORM_GUID = "4277031c-099a-4f9a-8cbe-267ed8f0327d";
+
+    const firstname = payload.name.split(" ")[0] || "";
+    const lastname = payload.name.split(" ").slice(1).join(" ");
+
+    const hubspotPayload = {
+      fields: [
+        { name: "firstname", value: firstname },
+        { name: "lastname",  value: lastname },
+        { name: "email",     value: payload.email },
+        { name: "company",   value: payload.company },
+        { name: "scope",     value: payload.scope },
+        { name: "what_are_you_building", value: payload.summary },
+      ],
+      context: {
+        pageUri: window.location.href,
+        pageName: document.title,
+      },
+    };
+
+    const response = await fetch(
+      `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_GUID}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hubspotPayload),
+      }
+    );
+
+    if (response.ok) {
+      console.log("Submitted to HubSpot successfully!");
+    } else {
+      const error = await response.json().catch(() => ({}));
+      console.error("HubSpot error:", error);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsScopeOpen(false);
@@ -50,9 +89,12 @@ export function ContactForm() {
     setErrorMessage(null);
 
     const form = event.currentTarget;
+    const payload = buildInquiryPayload(form, selectedScope);
 
     try {
-      await submitInquiry(buildInquiryPayload(form, selectedScope));
+      // Send to HubSpot directly as requested
+      await submitToHubSpot(payload);
+      
       form.reset();
       setSelectedScope(scopeOptions[0]);
       setFormStep("success");
@@ -82,47 +124,45 @@ export function ContactForm() {
       {/* Left panel */}
       <div className="flex flex-col justify-between gap-10 p-8 sm:p-10 lg:p-14">
         <div>
-          <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.32em] text-accent-300/80">
-            Discovery intake
+          <div className="inline-flex items-center gap-3 rounded-full border border-foreground/10 bg-foreground/[0.05] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.32em] text-accent-300/80">
+            Start a project
           </div>
 
-          <h2 className="mt-7 max-w-xl font-display text-[clamp(2rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-white">
-            Ready to give the next launch real gravity?
+          <h2 className="mt-7 max-w-xl font-display text-[clamp(2rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-foreground">
+            Ready to build your next custom AI or scalable web app?
           </h2>
 
-          <p className="mt-6 max-w-xl text-base leading-8 text-white/70">
-            Tell us what you are building and where you need momentum. We will help shape
-            the narrative, the interface, and the delivery path around a system that feels
-            premium from day one.
+          <p className="mt-6 max-w-xl text-base leading-8 text-foreground/70">
+            Tell us what you are building. Whether you need an intelligent AI workflow, a high-performance mobile app, or a complete digital overhaul, we'll design the cleanest technical route from concept to launch.
           </p>
         </div>
 
         <div className="grid gap-4">
           {experienceTracks.map(({ icon: Icon, title, description }) => (
             <GlowBox key={title} className="glass-panel flex items-start gap-4 p-5 sm:p-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-accent-300">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-foreground/10 bg-foreground/[0.06] text-accent-300">
                 <Icon className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
-                <p className="mt-2 font-body text-sm leading-7 text-white/66">{description}</p>
+                <h3 className="font-display text-lg font-semibold text-foreground">{title}</h3>
+                <p className="mt-2 font-body text-sm leading-7 text-foreground/66">{description}</p>
               </div>
             </GlowBox>
           ))}
         </div>
 
-        <GlowBox className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6 backdrop-blur-xl">
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-white/45">
+        <GlowBox className="rounded-[1.75rem] border border-foreground/10 bg-background/20 p-6 backdrop-blur-xl">
+          <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-foreground/45">
             What happens next
           </p>
-          <div className="mt-4 grid gap-3 text-sm text-white/68 sm:grid-cols-3">
-            <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="mt-4 grid gap-3 text-sm text-foreground/68 sm:grid-cols-3">
+            <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
               01. We review the brief, goals, and product surface.
             </GlowBox>
-            <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
               02. We map a visual and technical direction.
             </GlowBox>
-            <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
               03. We return with the cleanest route to launch.
             </GlowBox>
           </div>
@@ -130,8 +170,13 @@ export function ContactForm() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex items-start justify-center border-t border-white/10 bg-black/20 p-4 sm:p-8 lg:border-l lg:border-t-0 lg:bg-black/10">
-        <GlowBox className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 shadow-[0_20px_80px_rgba(2,6,23,0.38)] backdrop-blur-md sm:p-8">
+      <div className="flex items-start justify-center border-t border-foreground/10 bg-background/20 p-4 sm:p-8 lg:border-l lg:border-t-0 lg:bg-background/10">
+        <GlowBox 
+          className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-foreground/10 bg-foreground/[0.06] p-6 backdrop-blur-md sm:p-8 transition-all"
+          style={{
+            boxShadow: `0 20px 80px var(--form-panel-shadow)`,
+          }}
+        >
           {formStep === "success" ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.94 }}
@@ -139,28 +184,28 @@ export function ContactForm() {
               className="flex min-h-[26rem] flex-col items-center justify-center text-center"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.35)]">
-                <Check className="h-10 w-10 text-white" />
+                <Check className="h-10 w-10 text-foreground" />
               </div>
-              <h3 className="mt-6 font-display text-3xl text-white">Inquiry received</h3>
-              <p className="mt-3 max-w-sm text-sm leading-7 text-white/66">
+              <h3 className="mt-6 font-display text-3xl text-foreground">Inquiry received</h3>
+              <p className="mt-3 max-w-sm text-sm leading-7 text-foreground/66">
                 We have your request. The next step is a thoughtful follow-up, not a spam sequence.
               </p>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form data-form-source="contact-page" onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-accent-300/80">
-                  Project inquiry
+                  Project Inquiry
                 </p>
-                <h3 className="mt-3 font-display text-2xl text-white">Start a conversation</h3>
-                <p className="mt-2 font-body text-sm leading-7 text-white/62">
-                  Share the essentials and we will come back with the most sensible next move.
+                <h3 className="mt-3 font-display text-2xl text-foreground">Contact our development team</h3>
+                <p className="mt-2 font-body text-sm leading-7 text-foreground/62">
+                  Detail your project requirements and we will return with the most sensible technical approach to scale your business.
                 </p>
               </div>
 
               <div className="grid gap-4">
                 <div>
-                  <label htmlFor="name" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                  <label htmlFor="name" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                     Full name
                   </label>
                   <input
@@ -174,7 +219,7 @@ export function ContactForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                  <label htmlFor="email" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                     Work email
                   </label>
                   <input
@@ -189,7 +234,7 @@ export function ContactForm() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="company" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                    <label htmlFor="company" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                       Company
                     </label>
                     <input
@@ -202,7 +247,7 @@ export function ContactForm() {
                   </div>
 
                   <div ref={scopeFieldRef} className="relative">
-                    <label className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                    <label className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                       Scope
                     </label>
                     <input type="hidden" name="scope" value={selectedScope} />
@@ -217,11 +262,11 @@ export function ContactForm() {
                         inputClassName,
                         "group flex cursor-pointer items-center justify-between gap-3 pr-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl",
                         isScopeOpen &&
-                          "border-accent-300/55 bg-white/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
+                          "border-accent-300/55 bg-foreground/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
                       )}
                     >
-                      <span className="truncate text-white/88">{selectedScope}</span>
-                      <ChevronDown className={cn("h-4 w-4 shrink-0 text-white/50 transition duration-200", isScopeOpen && "rotate-180 text-accent-300")} />
+                      <span className="truncate text-foreground/88">{selectedScope}</span>
+                      <ChevronDown className={cn("h-4 w-4 shrink-0 text-foreground/50 transition duration-200", isScopeOpen && "rotate-180 text-accent-300")} />
                     </button>
 
                     <AnimatePresence>
@@ -234,8 +279,13 @@ export function ContactForm() {
                           transition={{ duration: 0.16, ease: "easeOut" }}
                           className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-40"
                         >
-                          <div className="relative isolate overflow-hidden rounded-[1.5rem] border border-white/12 bg-[linear-gradient(180deg,rgba(20,28,38,0.98),rgba(10,10,10,0.96))] p-2 shadow-[0_28px_80px_rgba(2,6,23,0.55)] backdrop-blur-3xl">
-                            <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-white/8" />
+                          <div 
+                            className="relative isolate overflow-hidden rounded-[1.5rem] border border-foreground/12 bg-surface p-2 shadow-2xl backdrop-blur-3xl transition-all"
+                            style={{
+                              borderColor: 'var(--border-light)',
+                            }}
+                          >
+                            <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-foreground/8" />
                             <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-accent-300/45 to-transparent" />
                             <div role="listbox" aria-labelledby="scope-trigger" className="relative max-h-72 space-y-1 overflow-y-auto">
                               {scopeOptions.map((option) => {
@@ -250,8 +300,8 @@ export function ContactForm() {
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-[1rem] px-4 py-3 text-left font-body text-base transition",
                                       isSelected
-                                        ? "bg-white/[0.08] text-white shadow-[inset_0_0_0_1px_rgba(125,211,252,0.24)]"
-                                        : "text-white/84 hover:bg-white/[0.06] hover:text-white"
+                                        ? "bg-foreground/[0.08] text-foreground shadow-[inset_0_0_0_1px_rgba(125,211,252,0.24)]"
+                                        : "text-foreground/84 hover:bg-foreground/[0.06] hover:text-foreground"
                                     )}
                                   >
                                     <span>{option}</span>
@@ -268,7 +318,7 @@ export function ContactForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="summary" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                  <label htmlFor="summary" className="mb-1.5 block font-mono text-[0.68rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                     What are you building?
                   </label>
                   <textarea
@@ -284,11 +334,11 @@ export function ContactForm() {
               <button
                 disabled={formStep === "submitting"}
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 font-mono text-sm font-medium uppercase tracking-[0.2em] text-brand-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-75"
+                className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground px-6 py-4 font-mono text-sm font-medium uppercase tracking-[0.2em] text-background transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-75"
               >
                 {formStep === "submitting" ? (
                   <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-950/20 border-t-brand-950" />
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-background/20 border-t-brand-950" />
                     Sending request
                   </>
                 ) : (
@@ -305,9 +355,7 @@ export function ContactForm() {
                 </p>
               ) : null}
 
-              <p className="text-center text-xs leading-6 text-white/42">
-                This demo form is front-end only for now. We can wire it to email, CRM, or your own backend next.
-              </p>
+
             </form>
           )}
         </GlowBox>

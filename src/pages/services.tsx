@@ -7,10 +7,10 @@ export default function ServicesRoute() {
   return (
     <>
       <Head>
-        <title>Services | Kapra Web AI</title>
+        <title>Custom AI & Mobile App Development Services | Kapra Web AI</title>
         <meta
           name="description"
-          content="Full-cycle web, mobile, AI, design, e-commerce, and strategy services from Kapra Web AI. High-fidelity digital products shipped to production."
+          content="Need custom AI and mobile app development? Kapra Web AI builds intelligent iOS/Android apps and custom AI solutions for startups and enterprises. Contact us."
         />
       </Head>
 

@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Spline from "@splinetool/react-spline";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Globe2, Smartphone, Sparkles, X } from "lucide-react";
 import { GlowBox } from "./GlowBox";
 import { buildInquiryPayload, inquiryScopeOptions, submitInquiry } from "../lib/inquiry";
 import { cn } from "../lib/utils";
+import { useDeviceType } from "../hooks/useDeviceType";
 
 const capabilityChips = ["Launch sites", "Mobile products", "AI workflows"];
 
@@ -31,7 +33,7 @@ const experienceTracks = [
 const scopeOptions = inquiryScopeOptions;
 
 const inputClassName =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-accent-300/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-accent-400/20";
+  "w-full rounded-2xl border border-foreground/10 bg-foreground/[0.05] px-4 py-3 text-sm text-foreground placeholder:text-foreground/35 outline-none transition focus:border-accent-300/40 focus:bg-foreground/[0.08] focus:ring-2 focus:ring-accent-400/20";
 
 const modalSurfaceTransition = {
   duration: 0.22,
@@ -48,6 +50,7 @@ export function Hero() {
   const [isScopeOpen, setIsScopeOpen] = useState(false);
   const scopeFieldRef = useRef<HTMLDivElement>(null);
   const scopeListId = useId();
+  const { isMobile } = useDeviceType();
 
   const handleExpand = () => {
     setErrorMessage(null);
@@ -62,6 +65,45 @@ export function Hero() {
     window.setTimeout(() => setFormStep("idle"), 350);
   };
 
+  const submitToHubSpot = async (payload: ReturnType<typeof buildInquiryPayload>) => {
+    const PORTAL_ID = "245587399";
+    const FORM_GUID = "4277031c-099a-4f9a-8cbe-267ed8f0327d";
+
+    const firstname = payload.name.split(" ")[0] || "";
+    const lastname = payload.name.split(" ").slice(1).join(" ");
+
+    const hubspotPayload = {
+      fields: [
+        { name: "firstname", value: firstname },
+        { name: "lastname", value: lastname },
+        { name: "email", value: payload.email },
+        { name: "company", value: payload.company },
+        { name: "scope", value: payload.scope },
+        { name: "what_are_you_building", value: payload.summary },
+      ],
+      context: {
+        pageUri: window.location.href,
+        pageName: document.title,
+      },
+    };
+
+    const response = await fetch(
+      `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_GUID}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hubspotPayload),
+      }
+    );
+
+    if (response.ok) {
+      console.log("Submitted to HubSpot successfully!");
+    } else {
+      const error = await response.json().catch(() => ({}));
+      console.error("HubSpot error:", error);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsScopeOpen(false);
@@ -69,9 +111,10 @@ export function Hero() {
     setErrorMessage(null);
 
     const form = event.currentTarget;
+    const payload = buildInquiryPayload(form, selectedScope);
 
     try {
-      await submitInquiry(buildInquiryPayload(form, selectedScope));
+      await submitToHubSpot(payload);
       form.reset();
       setSelectedScope(scopeOptions[0]);
       setFormStep("success");
@@ -131,26 +174,10 @@ export function Hero() {
     <>
       <section
         id="top"
-        className="relative isolate flex min-h-screen items-center overflow-hidden px-6 pb-10 pt-20 sm:px-10 lg:px-14"
+        className="relative isolate flex min-h-[75vh] items-center overflow-hidden px-6 pb-16 pt-36 sm:pt-40 lg:pt-44 sm:px-10 lg:px-14"
       >
-        {/* Deep space background */}
-        <div className="pointer-events-none absolute inset-0">
-          {/* Star field */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(30,58,138,0.35),transparent_50%),radial-gradient(ellipse_at_70%_60%,rgba(7,89,133,0.2),transparent_50%)]" />
-          {/* Nebula bloom */}
-          <div className="absolute left-[55%] top-[10%] h-[70vh] w-[70vh] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.07)_0%,rgba(14,165,233,0.04)_40%,transparent_70%)] blur-2xl" />
-          {/* Gold diagonal lines — Aetheria signature */}
-          <svg className="absolute inset-0 h-full w-full opacity-[0.06]" aria-hidden>
-            <line x1="60%" y1="0%" x2="100%" y2="55%" stroke="#f59e0b" strokeWidth="1" />
-            <line x1="65%" y1="0%" x2="100%" y2="45%" stroke="#f59e0b" strokeWidth="0.5" />
-            <line x1="55%" y1="0%" x2="95%" y2="60%" stroke="#f59e0b" strokeWidth="0.5" />
-            <line x1="100%" y1="30%" x2="50%" y2="100%" stroke="#f59e0b" strokeWidth="1" />
-            <line x1="100%" y1="20%" x2="45%" y2="100%" stroke="#f59e0b" strokeWidth="0.5" />
-          </svg>
-          {/* Ambient cyan orbs */}
-          <div className="absolute left-[10%] top-[18%] h-48 w-48 rounded-full bg-accent-500/10 blur-[120px]" />
-          <div className="absolute right-[8%] top-[20%] h-56 w-56 rounded-full bg-cyan-200/8 blur-[140px]" />
-        </div>
+        {/* Pure black background — no decorative tints */}
+        <div className="pointer-events-none absolute inset-0" />
 
         <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
 
@@ -159,36 +186,37 @@ export function Hero() {
             initial={{ opacity: 0, x: -28 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-2xl sm:p-8 lg:p-10"
+            className="rounded-[2.5rem] border border-foreground/10 bg-foreground/[0.06] p-7 backdrop-blur-3xl sm:p-8 lg:p-10 relative z-10 shadow-[0_32px_120px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]"
           >
-            {/* Company badge */}
-            <div className="mb-4 inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-300" />
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.32em] text-white/60">Kapra Web AI</span>
-            </div>
 
-            <h1 className="font-display text-[clamp(1.8rem,3.5vw,3.4rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-white">
-              Scalable Web, Mobile,{" "}
-              <span className="gradient-text">&amp; AI Development</span>{" "}
-              for Ambitious Brands
+            <h1 className="font-display text-[clamp(2.5rem,8vw,4.5rem)] font-bold leading-[1] tracking-[-0.04em] text-foreground">
+              Web. Mobile. AI.{" "}
+              <span className="gradient-text leading-[1]"><br />We Build It All.</span>
             </h1>
 
-            <p className="mt-3 text-sm leading-7 text-white/62 sm:text-base">
-              As a premier digital experience studio, Kapra delivers launch-ready
-              e-commerce and AI solutions. We combine clear systems with modern web
-              engineering to turn your vision into a high-converting digital product.
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-foreground/75 sm:text-lg sm:leading-relaxed relative z-20">
+              Kapra Web AI is your end-to-end technology partner — delivering custom web development, mobile apps, and intelligent AI solutions that help businesses of all sizes grow faster and smarter.
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } } }}
+              className="mt-8 flex flex-wrap gap-2.5 relative z-20"
+            >
               {capabilityChips.map((chip) => (
-                <span
+                <motion.span
+                  variants={{
+                    hidden: { opacity: 0, y: 10, scale: 0.9 },
+                    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100 } }
+                  }}
                   key={chip}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/62 backdrop-blur-lg"
+                  className="rounded-full border border-accent-400/20 bg-accent-400/10 px-4 py-2 text-[0.7rem] uppercase tracking-wider sm:text-xs font-semibold text-foreground/80 shadow-[0_4px_24px_rgb(var(--accent-400)/0.12)] backdrop-blur-xl"
                 >
                   {chip}
-                </span>
+                </motion.span>
               ))}
-            </div>
+            </motion.div>
 
             <AnimatePresence initial={false}>
               {!isExpanded && (
@@ -201,12 +229,12 @@ export function Hero() {
                 >
                   <button
                     onClick={handleExpand}
-                    className="bg-zinc-100 text-zinc-900 border border-white/20 relative text-sm font-medium rounded-full h-12 p-1 ps-6 pe-14 flex items-center group transition-all duration-500 hover:ps-14 hover:pe-6 w-fit overflow-hidden cursor-pointer"
+                    className="bg-zinc-100 text-zinc-900 border border-foreground/20 relative text-sm font-medium rounded-full h-12 p-1 ps-6 pe-14 flex items-center group transition-all duration-500 hover:ps-14 hover:pe-6 w-fit overflow-hidden cursor-pointer"
                   >
                     <span className="relative z-10 font-bold uppercase tracking-widest text-[0.7rem] transition-all duration-500">
-                      Let's Collaborate
+                      Contact Us
                     </span>
-                    <div className="absolute right-1 w-10 h-10 bg-brand-950 text-white rounded-full flex items-center justify-center transition-all duration-500 group-hover:right-[calc(100%-44px)] group-hover:rotate-45">
+                    <div className="absolute right-1 w-10 h-10 bg-background text-foreground rounded-full flex items-center justify-center transition-all duration-500 group-hover:right-[calc(100%-44px)] group-hover:rotate-45">
                       <ArrowUpRight size={18} strokeWidth={2.5} />
                     </div>
                   </button>
@@ -215,88 +243,31 @@ export function Hero() {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── RIGHT: Glowing Geometric Crystal ── */}
+          {/* ── RIGHT: Interactive 3D Spline Engine ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="relative hidden lg:flex items-center justify-center"
+            transition={{ duration: 1.4, delay: 0.2, ease: "easeOut" }}
+            className="spline-wrapper absolute inset-x-0 -top-[5%] flex lg:relative items-center justify-center h-[55vh] w-[140%] -left-[20%] pointer-events-none lg:pointer-events-auto z-0 lg:z-50 lg:w-[120%] lg:h-[500px] lg:-mr-20 lg:left-auto lg:top-auto opacity-50 lg:opacity-100 mix-blend-screen [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_15%,transparent_100%)] lg:[mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,#000_40%,transparent_100%)]"
           >
-            {/* Outer glow rings */}
-            <div className="absolute h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.18)_0%,transparent_65%)]" />
-            <div className="absolute h-[320px] w-[320px] rounded-full border border-cyan-400/10 animate-[spin_30s_linear_infinite]" />
-            <div className="absolute h-[280px] w-[280px] rounded-full border border-cyan-300/8 animate-[spin_20s_linear_infinite_reverse]" />
+            {!isMobile && (
+              <Spline
+                className="w-full h-full mix-blend-screen"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+                scene="https://prod.spline.design/dJqTIQ-tE3ULUPMi/scene.splinecode"
+              />
+            )}
 
-            {/* Crystal SVG */}
-            <svg viewBox="0 0 320 420" className="relative z-10 h-[420px] w-[320px] drop-shadow-[0_0_80px_rgba(56,189,248,0.6)]" aria-hidden>
-              <defs>
-                <linearGradient id="crystalTop" x1="50%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="#e0f7ff" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.6" />
-                </linearGradient>
-                <linearGradient id="crystalMid" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.3" />
-                </linearGradient>
-                <linearGradient id="crystalBot" x1="50%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#e0f7ff" stopOpacity="0.9" />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-                <filter id="glowStrong">
-                  <feGaussianBlur stdDeviation="8" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
+            {/* Mobile-only backglow for extra depth behind the splines, removed to eliminate golden aura */}
 
-              {/* Circuit lines */}
-              <g stroke="#38bdf8" strokeWidth="0.6" opacity="0.3" fill="none">
-                <line x1="160" y1="60" x2="80" y2="30" /><line x1="160" y1="60" x2="240" y2="30" />
-                <line x1="160" y1="360" x2="80" y2="390" /><line x1="160" y1="360" x2="240" y2="390" />
-                <line x1="60" y1="210" x2="20" y2="180" /><line x1="60" y1="210" x2="20" y2="240" />
-                <line x1="260" y1="210" x2="300" y2="180" /><line x1="260" y1="210" x2="300" y2="240" />
-                <circle cx="80" cy="30" r="2" fill="#7dd3fc" /><circle cx="240" cy="30" r="2" fill="#7dd3fc" />
-                <circle cx="80" cy="390" r="2" fill="#7dd3fc" /><circle cx="240" cy="390" r="2" fill="#7dd3fc" />
-                <circle cx="20" cy="180" r="2" fill="#7dd3fc" /><circle cx="20" cy="240" r="2" fill="#7dd3fc" />
-                <circle cx="300" cy="180" r="2" fill="#7dd3fc" /><circle cx="300" cy="240" r="2" fill="#7dd3fc" />
-              </g>
+            {/* Ambient backglow for the Spline model (desktop) */}
+            <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-accent-400/10 blur-[100px] pointer-events-none -z-10" />
 
-              {/* Upper diamond */}
-              <polygon points="160,20 220,120 160,145 100,120" fill="url(#crystalTop)" filter="url(#glow)" opacity="0.9" />
-              <polygon points="160,20 100,120 160,145" fill="#bae6fd" opacity="0.3" />
-              <polygon points="160,20 220,120 160,145" fill="#0ea5e9" opacity="0.2" />
-
-              {/* Mid belt */}
-              <polygon points="100,120 220,120 260,210 160,240 60,210" fill="url(#crystalMid)" filter="url(#glow)" opacity="0.85" />
-              <line x1="160" y1="145" x2="160" y2="210" stroke="#e0f7ff" strokeWidth="1" opacity="0.8" />
-              <line x1="100" y1="120" x2="160" y2="210" stroke="#7dd3fc" strokeWidth="0.8" opacity="0.5" />
-              <line x1="220" y1="120" x2="160" y2="210" stroke="#7dd3fc" strokeWidth="0.8" opacity="0.5" />
-
-              {/* Lower diamond */}
-              <polygon points="60,210 160,240 260,210 160,295" fill="url(#crystalMid)" filter="url(#glow)" opacity="0.8" />
-              <polygon points="160,240 60,210 160,295" fill="#0ea5e9" opacity="0.25" />
-              <polygon points="160,240 260,210 160,295" fill="#bae6fd" opacity="0.25" />
-
-              {/* Bottom tip */}
-              <polygon points="100,295 220,295 160,400" fill="url(#crystalBot)" filter="url(#glow)" opacity="0.9" />
-              <line x1="160" y1="295" x2="160" y2="400" stroke="#e0f7ff" strokeWidth="1" opacity="0.7" />
-
-              {/* Core glow */}
-              <ellipse cx="160" cy="210" rx="22" ry="28" fill="white" filter="url(#glowStrong)" opacity="0.9" />
-              <ellipse cx="160" cy="210" rx="10" ry="13" fill="#e0f7ff" opacity="1" />
-
-              {/* Edge highlights */}
-              <line x1="160" y1="20" x2="220" y2="120" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
-              <line x1="160" y1="20" x2="100" y2="120" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
-              <line x1="160" y1="400" x2="220" y2="295" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
-              <line x1="160" y1="400" x2="100" y2="295" stroke="#e0f7ff" strokeWidth="1.5" opacity="0.6" filter="url(#glow)" />
-            </svg>
-
-            {/* Floating orb behind crystal */}
-            <div className="absolute h-40 w-40 rounded-full bg-cyan-400/20 blur-2xl" />
+            {/* Cover the "Built with Spline" badge — full-width bottom strip */}
+            <div className="absolute bottom-0 left-0 right-0 h-[20%] lg:h-14 bg-gradient-to-t from-black to-transparent lg:bg-black pointer-events-none z-10" />
           </motion.div>
 
         </div>
@@ -314,7 +285,7 @@ export function Hero() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
               onClick={handleClose}
-              className="absolute inset-0 bg-brand-950/90 backdrop-blur-md"
+              className="absolute inset-0 bg-background/90 backdrop-blur-md"
             />
 
             <motion.div
@@ -323,23 +294,23 @@ export function Hero() {
               exit={{ opacity: 0, scale: 0.985, y: 10 }}
               transition={modalSurfaceTransition}
               style={{ borderRadius: 32 }}
-              className="relative flex h-full w-full max-w-6xl transform-gpu overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_28%),linear-gradient(180deg,_rgba(255,255,255,0.04),_rgba(255,255,255,0.02))] shadow-[0_30px_120px_rgba(2,6,23,0.65)] will-change-transform sm:h-[min(92vh,58rem)] sm:rounded-[2rem]"
+              className="relative flex h-full w-full max-w-6xl transform-gpu overflow-hidden border border-foreground/10 bg-surface shadow-[0_30px_120px_rgba(2,6,23,0.65)] will-change-transform sm:h-[min(92vh,58rem)] sm:rounded-[2rem]"
             >
               <div className="pointer-events-none absolute inset-0">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(14,165,233,0.26),transparent_26%),radial-gradient(circle_at_84%_18%,rgba(125,211,252,0.12),transparent_18%),linear-gradient(135deg,rgba(10,10,10,0.22),rgba(10,10,10,0.66))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgb(var(--accent-500)/0.26),transparent_26%),radial-gradient(circle_at_84%_18%,rgb(var(--accent-400)/0.12),transparent_18%),linear-gradient(135deg,rgba(10,10,10,0.22),rgba(10,10,10,0.66))]" />
                 <div className="absolute inset-0 bg-grid [background-size:68px_68px] opacity-[0.1]" />
                 <div
                   className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-accent-500/14 blur-[140px]"
                 />
                 <div
-                  className="absolute bottom-[-3rem] right-[-2rem] h-80 w-80 rounded-full bg-cyan-200/10 blur-[150px]"
+                  className="absolute bottom-[-3rem] right-[-2rem] h-80 w-80 rounded-full bg-accent-400/10 blur-[150px]"
                 />
               </div>
 
 
               <button
                 onClick={handleClose}
-                className="absolute right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/78 backdrop-blur-xl transition hover:bg-white/[0.1] hover:text-white sm:right-6 sm:top-6"
+                className="absolute right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.06] text-foreground/78 backdrop-blur-xl transition hover:bg-foreground/[0.1] hover:text-foreground sm:right-6 sm:top-6"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -350,18 +321,18 @@ export function Hero() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -18 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="flex flex-col justify-between gap-10 p-8 sm:p-10 lg:p-14"
+                  className="order-last lg:order-first flex flex-col justify-between gap-10 p-8 sm:p-10 lg:p-14"
                 >
                   <div>
-                    <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.32em] text-accent-300/80">
+                    <div className="inline-flex items-center gap-3 rounded-full border border-foreground/10 bg-foreground/[0.05] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.32em] text-accent-300/80">
                       Discovery intake
                     </div>
 
-                    <h2 className="mt-7 max-w-xl font-display text-[clamp(2rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-white">
+                    <h2 className="mt-7 max-w-xl font-display text-[clamp(2rem,5vw,4.8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-foreground">
                       Ready to give the next launch real gravity?
                     </h2>
 
-                    <p className="mt-6 max-w-xl text-base leading-8 text-white/70">
+                    <p className="mt-6 max-w-xl text-base leading-8 text-foreground/70">
                       Tell us what you are building and where you need momentum. We will
                       help shape the narrative, the interface, and the delivery path
                       around a system that feels premium from day one.
@@ -374,29 +345,29 @@ export function Hero() {
                         key={title}
                         className="glass-panel flex items-start gap-4 p-5 sm:p-6"
                       >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-accent-300">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-foreground/10 bg-foreground/[0.06] text-accent-300">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{title}</h3>
-                          <p className="mt-2 text-sm leading-7 text-white/66">{description}</p>
+                          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+                          <p className="mt-2 text-sm leading-7 text-foreground/66">{description}</p>
                         </div>
                       </GlowBox>
                     ))}
                   </div>
 
-                  <GlowBox className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6 backdrop-blur-xl">
-                    <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-white/45">
+                  <GlowBox className="rounded-[1.75rem] border border-foreground/10 bg-background/20 p-6 backdrop-blur-xl">
+                    <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-foreground/45">
                       What happens next
                     </p>
-                    <div className="mt-4 grid gap-3 text-sm text-white/68 sm:grid-cols-3">
-                      <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="mt-4 grid gap-3 text-sm text-foreground/68 sm:grid-cols-3">
+                      <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
                         01. We review the brief, goals, and product surface.
                       </GlowBox>
-                      <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
                         02. We map a visual and technical direction.
                       </GlowBox>
-                      <GlowBox className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <GlowBox className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4">
                         03. We return with the cleanest route to launch.
                       </GlowBox>
                     </div>
@@ -408,9 +379,9 @@ export function Hero() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 18 }}
                   transition={{ duration: 0.18, delay: 0.02, ease: "easeOut" }}
-                  className="flex items-start justify-center border-t border-white/10 bg-black/20 p-4 sm:p-8 lg:border-l lg:border-t-0 lg:bg-black/10"
+                  className="order-first lg:order-last flex items-start justify-center border-t border-foreground/10 bg-background/20 p-4 sm:p-8 lg:border-l lg:border-t-0 lg:bg-background/10"
                 >
-                  <GlowBox className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 shadow-[0_20px_80px_rgba(2,6,23,0.38)] backdrop-blur-md sm:p-8">
+                  <GlowBox className="w-full max-w-lg overflow-visible rounded-[1.75rem] border border-foreground/10 bg-foreground/[0.06] p-6 shadow-[0_20px_80px_rgba(2,6,23,0.38)] backdrop-blur-md sm:p-8">
                     {formStep === "success" ? (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.94 }}
@@ -418,12 +389,12 @@ export function Hero() {
                         className="flex min-h-[26rem] flex-col items-center justify-center text-center"
                       >
                         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.35)]">
-                          <Check className="h-10 w-10 text-white" />
+                          <Check className="h-10 w-10 text-foreground" />
                         </div>
-                        <h3 className="mt-6 font-display text-3xl text-white">
+                        <h3 className="mt-6 font-display text-3xl text-foreground">
                           Inquiry received
                         </h3>
-                        <p className="mt-3 max-w-sm text-sm leading-7 text-white/66">
+                        <p className="mt-3 max-w-sm text-sm leading-7 text-foreground/66">
                           We have your request. The next step is a thoughtful follow-up,
                           not a spam sequence.
                         </p>
@@ -432,15 +403,15 @@ export function Hero() {
                         </button>
                       </motion.div>
                     ) : (
-                      <form onSubmit={handleSubmit} className="space-y-5">
+                      <form data-form-source="hero-modal" onSubmit={handleSubmit} className="space-y-5">
                         <div>
                           <p className="font-mono text-[0.68rem] uppercase tracking-[0.3em] text-accent-300/80">
                             Project inquiry
                           </p>
-                          <h3 className="mt-3 font-display text-2xl text-white">
+                          <h3 className="mt-3 font-display text-2xl text-foreground">
                             Start a conversation
                           </h3>
-                          <p className="mt-2 text-sm leading-7 text-white/62">
+                          <p className="mt-2 text-sm leading-7 text-foreground/62">
                             Share the essentials and we will come back with the most
                             sensible next move.
                           </p>
@@ -450,7 +421,7 @@ export function Hero() {
                           <div>
                             <label
                               htmlFor="name"
-                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-white/48"
+                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-foreground/48"
                             >
                               Full name
                             </label>
@@ -467,7 +438,7 @@ export function Hero() {
                           <div>
                             <label
                               htmlFor="email"
-                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-white/48"
+                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-foreground/48"
                             >
                               Work email
                             </label>
@@ -485,7 +456,7 @@ export function Hero() {
                             <div>
                               <label
                                 htmlFor="company"
-                                className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-white/48"
+                                className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-foreground/48"
                               >
                                 Company
                               </label>
@@ -499,7 +470,7 @@ export function Hero() {
                             </div>
 
                             <div ref={scopeFieldRef} className="relative">
-                              <label className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-white/48">
+                              <label className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-foreground/48">
                                 Scope
                               </label>
                               <input type="hidden" name="scope" value={selectedScope} />
@@ -514,13 +485,13 @@ export function Hero() {
                                   inputClassName,
                                   "group flex cursor-pointer items-center justify-between gap-3 pr-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl",
                                   isScopeOpen &&
-                                  "border-accent-300/55 bg-white/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
+                                  "border-accent-300/55 bg-foreground/[0.09] shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_18px_40px_rgba(2,6,23,0.32)]"
                                 )}
                               >
-                                <span className="truncate text-white/88">{selectedScope}</span>
+                                <span className="truncate text-foreground/88">{selectedScope}</span>
                                 <ChevronDown
                                   className={cn(
-                                    "h-4 w-4 shrink-0 text-white/50 transition duration-200",
+                                    "h-4 w-4 shrink-0 text-foreground/50 transition duration-200",
                                     isScopeOpen && "rotate-180 text-accent-300"
                                   )}
                                 />
@@ -536,8 +507,8 @@ export function Hero() {
                                     transition={{ duration: 0.16, ease: "easeOut" }}
                                     className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-40"
                                   >
-                                    <div className="relative isolate overflow-hidden rounded-[1.5rem] border border-white/12 bg-[linear-gradient(180deg,rgba(20,28,38,0.98),rgba(10,10,10,0.96))] p-2 shadow-[0_28px_80px_rgba(2,6,23,0.55)] backdrop-blur-3xl">
-                                      <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-white/8" />
+                                    <div className="relative isolate overflow-hidden rounded-[1.5rem] border border-foreground/12 bg-surface p-2 shadow-2xl backdrop-blur-3xl">
+                                      <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-foreground/8" />
                                       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-accent-300/45 to-transparent" />
                                       <div
                                         role="listbox"
@@ -560,13 +531,13 @@ export function Hero() {
                                               className={cn(
                                                 "flex w-full items-center justify-between rounded-[1rem] px-4 py-3 text-left text-base transition",
                                                 isSelected
-                                                  ? "bg-white/[0.08] text-white shadow-[inset_0_0_0_1px_rgba(125,211,252,0.24)]"
-                                                  : "text-white/84 hover:bg-white/[0.06] hover:text-white"
+                                                  ? "bg-foreground/[0.08] text-foreground shadow-[inset_0_0_0_1px_rgb(var(--accent-300)/0.24)]"
+                                                  : "text-foreground/84 hover:bg-foreground/[0.06] hover:text-foreground"
                                               )}
                                             >
                                               <span>{option}</span>
                                               {isSelected ? (
-                                                <span className="h-2.5 w-2.5 rounded-full bg-accent-300 shadow-[0_0_14px_rgba(125,211,252,0.85)]" />
+                                                <span className="h-2.5 w-2.5 rounded-full bg-accent-300 shadow-[0_0_14px_rgb(var(--accent-300)/0.85)]" />
                                               ) : null}
                                             </button>
                                           );
@@ -582,7 +553,7 @@ export function Hero() {
                           <div>
                             <label
                               htmlFor="summary"
-                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-white/48"
+                              className="mb-1.5 block text-[0.7rem] font-medium uppercase tracking-[0.24em] text-foreground/48"
                             >
                               What are you building?
                             </label>
@@ -599,11 +570,11 @@ export function Hero() {
                         <button
                           disabled={formStep === "submitting"}
                           type="submit"
-                          className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-brand-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-75"
+                          className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-foreground px-6 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-background transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-75"
                         >
                           {formStep === "submitting" ? (
                             <>
-                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-950/20 border-t-brand-950" />
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-background/20 border-t-brand-950" />
                               Sending request
                             </>
                           ) : (
@@ -623,10 +594,7 @@ export function Hero() {
                           </p>
                         ) : null}
 
-                        <p className="text-center text-xs leading-6 text-white/42">
-                          This demo form is front-end only for now. We can wire it to email,
-                          CRM, or your own backend next.
-                        </p>
+
                       </form>
                     )}
                   </GlowBox>

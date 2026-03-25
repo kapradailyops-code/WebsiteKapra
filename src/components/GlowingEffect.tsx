@@ -1,8 +1,20 @@
-import { memo, useCallback, useEffect, useRef, type CSSProperties } from "react";
-import { animate, type AnimationPlaybackControls } from "framer-motion";
+"use client";
+
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  type CSSProperties,
+} from "react";
+import {
+  animate,
+  type AnimationPlaybackControls,
+} from "framer-motion";
+import { useTheme } from "../hooks/useTheme";
 import { cn } from "../lib/utils";
 
-export interface GlowingEffectProps {
+interface GlowingEffectProps {
   blur?: number;
   inactiveZone?: number;
   proximity?: number;
@@ -14,7 +26,6 @@ export interface GlowingEffectProps {
   movementDuration?: number;
   borderWidth?: number;
 }
-
 const GlowingEffect = memo(
   ({
     blur = 0,
@@ -26,20 +37,18 @@ const GlowingEffect = memo(
     className,
     movementDuration = 2,
     borderWidth = 1,
-    disabled = false
+    disabled = true,
   }: GlowingEffectProps) => {
+    const { theme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const lastPosition = useRef({ x: 0, y: 0 });
     const animationFrameRef = useRef<number>(0);
     const angleAnimationRef = useRef<AnimationPlaybackControls | null>(null);
     const idleOpacity = glow ? "0.52" : "0.18";
 
-    const updateGlowOpacity = useCallback(
-      (element: HTMLDivElement, value: string) => {
-        element.style.setProperty("--glow-opacity", value);
-      },
-      []
-    );
+    const updateGlowOpacity = useCallback((element: HTMLDivElement, value: string) => {
+      element.style.setProperty("--glow-opacity", value);
+    }, []);
 
     const handleMove = useCallback(
       (event?: MouseEvent | PointerEvent | { x: number; y: number }) => {
@@ -51,7 +60,7 @@ const GlowingEffect = memo(
           cancelAnimationFrame(animationFrameRef.current);
         }
 
-        animationFrameRef.current = window.requestAnimationFrame(() => {
+        animationFrameRef.current = requestAnimationFrame(() => {
           const element = containerRef.current;
 
           if (!element) {
@@ -67,7 +76,10 @@ const GlowingEffect = memo(
           }
 
           const center = [left + width * 0.5, top + height * 0.5];
-          const distanceFromCenter = Math.hypot(mouseX - center[0], mouseY - center[1]);
+          const distanceFromCenter = Math.hypot(
+            mouseX - center[0],
+            mouseY - center[1]
+          );
           const inactiveRadius = 0.5 * Math.min(width, height) * inactiveZone;
 
           if (distanceFromCenter < inactiveRadius) {
@@ -87,9 +99,12 @@ const GlowingEffect = memo(
             return;
           }
 
-          const currentAngle = Number.parseFloat(element.style.getPropertyValue("--start")) || 0;
+          const currentAngle =
+            Number.parseFloat(element.style.getPropertyValue("--start")) || 0;
           let targetAngle =
-            (180 * Math.atan2(mouseY - center[1], mouseX - center[0])) / Math.PI + 90;
+            (180 * Math.atan2(mouseY - center[1], mouseX - center[0])) /
+              Math.PI +
+            90;
 
           const angleDiff = ((targetAngle - currentAngle + 180) % 360) - 180;
           targetAngle = currentAngle + angleDiff;
@@ -100,7 +115,7 @@ const GlowingEffect = memo(
             ease: [0.16, 1, 0.3, 1],
             onUpdate: (value) => {
               element.style.setProperty("--start", String(value));
-            }
+            },
           });
         });
       },
@@ -120,13 +135,14 @@ const GlowingEffect = memo(
       const handlePointerMove = (event: PointerEvent) => handleMove(event);
 
       window.addEventListener("scroll", handleScroll, { passive: true });
-      document.body.addEventListener("pointermove", handlePointerMove, { passive: true });
+      document.body.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
 
       return () => {
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
         }
-
         angleAnimationRef.current?.stop();
         window.removeEventListener("scroll", handleScroll);
         document.body.removeEventListener("pointermove", handlePointerMove);
@@ -134,14 +150,7 @@ const GlowingEffect = memo(
     }, [disabled, handleMove, idleOpacity, updateGlowOpacity]);
 
     if (disabled) {
-      return (
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 rounded-[inherit] border border-white/10",
-            className
-          )}
-        />
-      );
+      return null;
     }
 
     const baseMaskStyle = {
@@ -149,7 +158,7 @@ const GlowingEffect = memo(
         "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
       WebkitMaskComposite: "xor",
       mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-      maskComposite: "exclude"
+      maskComposite: "exclude",
     } as CSSProperties;
 
     const whiteGradient = `conic-gradient(
@@ -161,16 +170,25 @@ const GlowingEffect = memo(
       transparent 360deg
     )`;
 
-    const defaultGradient = `conic-gradient(
+    // Theme-aware gradient colors — gold only
+    const defaultGradient = theme === "dark" ? `conic-gradient(
       from calc((var(--start) - ${spread}) * 1deg),
-      rgba(221, 123, 187, 0) 0deg,
-      #dd7bbb ${Math.max(spread * 0.38, 10)}deg,
-      #d79f1e ${Math.max(spread * 0.9, 20)}deg,
-      #5a922c ${Math.max(spread * 1.4, 30)}deg,
-      #4c7894 ${Math.max(spread * 1.9, 40)}deg,
-      rgba(76, 120, 148, 0) ${Math.max(spread * 2.45, 52)}deg,
+      rgba(229, 168, 75, 0) 0deg,
+      #E5A84B ${Math.max(spread * 0.38, 10)}deg,
+      #C68A36 ${Math.max(spread * 0.9, 20)}deg,
+      #F0C060 ${Math.max(spread * 1.4, 30)}deg,
+      rgba(198, 138, 54, 0) ${Math.max(spread * 2.45, 52)}deg,
+      transparent 360deg
+    )` : `conic-gradient(
+      from calc((var(--start) - ${spread}) * 1deg),
+      rgba(198, 138, 54, 0) 0deg,
+      #C68A36 ${Math.max(spread * 0.38, 10)}deg,
+      #A87023 ${Math.max(spread * 0.9, 20)}deg,
+      #E5A84B ${Math.max(spread * 1.4, 30)}deg,
+      rgba(168, 112, 35, 0) ${Math.max(spread * 2.45, 52)}deg,
       transparent 360deg
     )`;
+
 
     return (
       <div
@@ -181,7 +199,7 @@ const GlowingEffect = memo(
             "--start": "0",
             "--glow-opacity": idleOpacity,
             "--glowingeffect-border-width": `${borderWidth}px`,
-            "--gradient": variant === "white" ? whiteGradient : defaultGradient
+            "--gradient": variant === "white" ? whiteGradient : defaultGradient,
           } as CSSProperties
         }
         className={cn("pointer-events-none absolute inset-0 rounded-[inherit]", className)}
@@ -192,7 +210,7 @@ const GlowingEffect = memo(
               {
                 ...baseMaskStyle,
                 background: "var(--gradient)",
-                opacity: "calc(var(--glow-opacity) * 0.42)"
+                opacity: "calc(var(--glow-opacity) * 0.42)",
               } as CSSProperties
             }
             className="absolute -inset-px rounded-[inherit] p-[var(--glowingeffect-border-width)] blur-[var(--blur)] transition-opacity duration-300"
@@ -203,7 +221,7 @@ const GlowingEffect = memo(
             {
               ...baseMaskStyle,
               background: "var(--gradient)",
-              opacity: "var(--glow-opacity)"
+              opacity: "var(--glow-opacity)",
             } as CSSProperties
           }
           className="absolute -inset-px rounded-[inherit] p-[var(--glowingeffect-border-width)] transition-opacity duration-300"
@@ -216,3 +234,4 @@ const GlowingEffect = memo(
 GlowingEffect.displayName = "GlowingEffect";
 
 export { GlowingEffect };
+export type { GlowingEffectProps };

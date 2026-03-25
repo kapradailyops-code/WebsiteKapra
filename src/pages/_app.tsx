@@ -1,23 +1,34 @@
 import type { AppProps } from "next/app";
-import { useEffect, useRef } from "react";
-import { ReactLenis } from "lenis/react";
-import gsap from "gsap";
+import { useEffect } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../styles/globals.css";
+import "../styles/speeder.css";
 
 export default function App({ Component, pageProps }: AppProps) {
-  const lenisRef = useRef<any>(null);
-
   useEffect(() => {
-    function update(time: number) {
-      lenisRef.current?.lenis?.raf(time * 1000);
+    // Initialize theme on app load to prevent FOUC (Flash of Unstyled Content)
+    const saved = localStorage.getItem("theme")
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const theme = saved || (prefersDark ? "dark" : "light")
+    
+    const html = document.documentElement
+    
+    // Remove any conflicting classes
+    html.classList.remove('dark')
+    
+    if (theme === "light") {
+      html.classList.add("light")
+      html.style.colorScheme = 'light'
+    } else {
+      html.classList.remove("light")
+      html.style.colorScheme = 'dark'
     }
 
-    gsap.ticker.add(update);
-
-    return () => {
-      gsap.ticker.remove(update);
-    };
-  }, []);
+    // Remove the FOUC prevention class after a short delay to ensure paint has happened
+    window.setTimeout(() => {
+      html.classList.remove('disable-transitions')
+    }, 50)
+  }, [])
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -36,8 +47,9 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <ReactLenis root ref={lenisRef} autoRaf={false}>
+    <>
       <Component {...pageProps} />
-    </ReactLenis>
+      <SpeedInsights />
+    </>
   );
 }

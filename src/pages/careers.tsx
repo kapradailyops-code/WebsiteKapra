@@ -7,10 +7,10 @@ export default function CareersPage() {
   return (
     <>
       <Head>
-        <title>Careers | Kapra Web AI</title>
+        <title>AI Agency Careers | Join Kapra Web AI</title>
         <meta
           name="description"
-          content="Join Kapra Web AI and help us shape the surface of the future. We're looking for brilliant engineers, designers, and strategists."
+          content="Explore remote tech jobs at Kapra Web AI. We're hiring engineers, designers, and strategists to build custom AI and mobile apps. View open roles."
         />
       </Head>
 

@@ -1,7 +1,10 @@
 "use client";
 
 import { cn } from "../lib/utils";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
+import { useDeviceType } from "../hooks/useDeviceType";
+import { useTheme } from "../hooks/useTheme";
+import { getGraphicsPreset } from "../utils/graphicsScale";
 
 interface GlobeProps {
   className?: string;
@@ -39,6 +42,16 @@ const DEFAULT_CONNECTIONS: { from: [number, number]; to: [number, number] }[] = 
   { from: [51.51, -0.13], to: [36.19, 44.01] },
 ];
 
+// Luxury purple & gold palette
+const getThemeColors = (isDarkTheme: boolean) => ({
+  dotColor: isDarkTheme ? "rgba(160, 100, 220, ALPHA)" : "rgba(130, 60, 190, ALPHA)",
+  arcColor: isDarkTheme ? "rgba(229, 168, 75, 0.55)" : "rgba(198, 138, 54, 0.45)",
+  markerColor: isDarkTheme ? "rgba(255, 200, 80, 1)" : "rgba(198, 138, 54, 1)",
+  glowColor: isDarkTheme ? "rgba(140, 70, 210, 0.06)" : "rgba(120, 50, 180, 0.04)",
+  ringColor: isDarkTheme ? "rgba(229, 168, 75, 0.12)" : "rgba(198, 138, 54, 0.08)",
+});
+
+
 function latLngToXYZ(lat: number, lng: number, radius: number): [number, number, number] {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((lng + 180) * Math.PI) / 180;
@@ -69,13 +82,24 @@ function project(x: number, y: number, z: number, cx: number, cy: number, fov: n
 export function Globe({
   className,
   size = 600,
-  dotColor = "rgba(100, 180, 255, ALPHA)",
-  arcColor = "rgba(100, 180, 255, 0.5)",
-  markerColor = "rgba(100, 220, 255, 1)",
+  dotColor: dotColorProp,
+  arcColor: arcColorProp,
+  markerColor: markerColorProp,
   autoRotateSpeed = 0.002,
   connections = DEFAULT_CONNECTIONS,
   markers = DEFAULT_MARKERS,
 }: GlobeProps) {
+  const { isMobile, isTablet } = useDeviceType();
+  const { theme } = useTheme();
+  const effectiveAutoRotateSpeed = isMobile ? 0 : autoRotateSpeed;
+  
+  // Get theme-aware colors
+  const themeColors = useMemo(() => getThemeColors(theme === "dark"), [theme]);
+  
+  // Use provided colors or fall back to theme defaults
+  const dotColor = dotColorProp ?? themeColors.dotColor;
+  const arcColor = arcColorProp ?? themeColors.arcColor;
+  const markerColor = markerColorProp ?? themeColors.markerColor;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotYRef = useRef(0.4);
   const rotXRef = useRef(0.3);
@@ -89,10 +113,14 @@ export function Globe({
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
   const dotsRef = useRef<[number, number, number][]>([]);
+  const isVisibleRef = useRef(true);
+
+  // Determine dot count based on device
+  const preset = getGraphicsPreset(isMobile, isTablet);
 
   useEffect(() => {
     const dots: [number, number, number][] = [];
-    const numDots = 1200;
+    const numDots = preset.dotCount;
     const goldenRatio = (1 + Math.sqrt(5)) / 2;
     for (let i = 0; i < numDots; i++) {
       const theta = (2 * Math.PI * i) / goldenRatio;
@@ -100,9 +128,33 @@ export function Globe({
       dots.push([Math.cos(theta) * Math.sin(phi), Math.cos(phi), Math.sin(theta) * Math.sin(phi)]);
     }
     dotsRef.current = dots;
+  }, [preset.dotCount]);
+
+  // Intersection Observer to pause animation when not visible
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisibleRef.current = entry.isIntersecting;
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(canvas);
+    return () => observer.disconnect();
   }, []);
 
   const draw = useCallback(() => {
+    // Only draw if visible
+    if (!isVisibleRef.current) {
+      animRef.current = requestAnimationFrame(draw);
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -120,21 +172,22 @@ export function Globe({
     const radius = Math.min(w, h) * 0.38;
     const fov = 600;
 
-    if (!dragRef.current.active) rotYRef.current += autoRotateSpeed;
+    if (!dragRef.current.active)
+      rotYRef.current += effectiveAutoRotateSpeed * preset.animationSpeed;
     timeRef.current += 0.015;
     const time = timeRef.current;
 
     ctx.clearRect(0, 0, w, h);
 
     const glowGrad = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.5);
-    glowGrad.addColorStop(0, "rgba(60, 140, 255, 0.03)");
+    glowGrad.addColorStop(0, `${themeColors.glowColor.replace("0.03", theme === "dark" ? "0.03" : "0.02")}`);
     glowGrad.addColorStop(1, "rgba(60, 140, 255, 0)");
     ctx.fillStyle = glowGrad;
     ctx.fillRect(0, 0, w, h);
 
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(100, 180, 255, 0.06)";
+    ctx.strokeStyle = themeColors.ringColor;
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -150,7 +203,7 @@ export function Globe({
       const [sx, sy] = project(x, y, z, cx, cy, fov);
       const depthAlpha = Math.max(0.1, 1 - (z + radius) / (2 * radius));
       ctx.beginPath();
-      ctx.arc(sx, sy, 1 + depthAlpha * 0.8, 0, Math.PI * 2);
+      ctx.arc(sx, sy, preset.markerSize / 2 + depthAlpha * 0.8, 0, Math.PI * 2);
       ctx.fillStyle = dotColor.replace("ALPHA", depthAlpha.toFixed(2));
       ctx.fill();
     }
@@ -175,7 +228,7 @@ export function Globe({
       ctx.moveTo(sx1, sy1);
       ctx.quadraticCurveTo(scx, scy, sx2, sy2);
       ctx.strokeStyle = arcColor;
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = preset.lineWidth;
       ctx.stroke();
       const t = (Math.sin(time * 1.2 + lat1 * 0.1) + 1) / 2;
       const tx = (1 - t) * (1 - t) * sx1 + 2 * (1 - t) * t * scx + t * t * sx2;
@@ -194,15 +247,15 @@ export function Globe({
       const [sx, sy] = project(x, y, z, cx, cy, fov);
       const pulse = Math.sin(time * 2 + marker.lat) * 0.5 + 0.5;
       ctx.beginPath();
-      ctx.arc(sx, sy, 4 + pulse * 4, 0, Math.PI * 2);
+      ctx.arc(sx, sy, preset.markerSize + pulse * preset.markerSize, 0, Math.PI * 2);
       ctx.strokeStyle = markerColor.replace("1)", `${0.2 + pulse * 0.15})`);
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+      ctx.arc(sx, sy, preset.markerSize * 0.625, 0, Math.PI * 2);
       ctx.fillStyle = markerColor;
       ctx.fill();
-      if (marker.label) {
+      if (marker.label && !isMobile) {
         ctx.font = "10px system-ui, sans-serif";
         ctx.fillStyle = markerColor.replace("1)", "0.6)");
         ctx.fillText(marker.label, sx + 8, sy + 3);
@@ -210,7 +263,7 @@ export function Globe({
     }
 
     animRef.current = requestAnimationFrame(draw);
-  }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers]);
+  }, [dotColor, arcColor, markerColor, effectiveAutoRotateSpeed, connections, markers, preset, isMobile, theme, themeColors]);
 
   useEffect(() => {
     animRef.current = requestAnimationFrame(draw);

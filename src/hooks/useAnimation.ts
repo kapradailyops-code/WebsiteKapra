@@ -1,50 +1,8 @@
 import { DependencyList, useEffect, useLayoutEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import { DURATIONS, EASE, SCROLL_OFFSETS } from "../config/animation";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-type AnimationCleanup = void | (() => void) | gsap.Context;
-
-function isGsapContext(value: AnimationCleanup): value is gsap.Context {
-  return Boolean(value) && typeof value === "object" && "revert" in value;
-}
+import { DURATIONS, EASE } from "../config/animation";
 
 export const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-export function useScrollAnimation<T extends HTMLElement>(
-  setup: (element: T) => AnimationCleanup,
-  deps: DependencyList = []
-) {
-  const ref = useRef<T | null>(null);
-
-  useIsomorphicLayoutEffect(() => {
-    const element = ref.current;
-
-    if (!element) {
-      return;
-    }
-
-    const cleanup = setup(element);
-
-    return () => {
-      if (typeof cleanup === "function") {
-        cleanup();
-        return;
-      }
-
-      if (isGsapContext(cleanup)) {
-        cleanup.revert();
-      }
-    };
-  }, deps);
-
-  return ref;
-}
 
 export function useInView<T extends HTMLElement>(options: IntersectionObserverInit = {}) {
   const ref = useRef<T | null>(null);
@@ -74,38 +32,6 @@ export function useInView<T extends HTMLElement>(options: IntersectionObserverIn
   return [ref, inView] as const;
 }
 
-export function useParallax<T extends HTMLElement>(
-  amount = 12,
-  deps: DependencyList = []
-) {
-  const ref = useRef<T | null>(null);
-
-  useIsomorphicLayoutEffect(() => {
-    const element = ref.current;
-
-    if (!element) {
-      return;
-    }
-
-    const context = gsap.context(() => {
-      gsap.to(element, {
-        yPercent: amount,
-        ease: "none",
-        scrollTrigger: {
-          trigger: element,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true
-        }
-      });
-    }, element);
-
-    return () => context.revert();
-  }, [amount, ...deps]);
-
-  return ref;
-}
-
 interface StaggerOptions {
   selector?: string;
   y?: number;
@@ -114,6 +40,10 @@ interface StaggerOptions {
   start?: string;
 }
 
+/**
+ * Hook for stagger animations using Framer Motion.
+ * Animates children elements marked with selector when they come into view.
+ */
 export function useStaggerAnimation<T extends HTMLElement>(
   options: StaggerOptions = {},
   deps: DependencyList = []
@@ -122,11 +52,11 @@ export function useStaggerAnimation<T extends HTMLElement>(
     selector = "[data-stagger]",
     y = 36,
     duration = DURATIONS.slow,
-    stagger = 0.14,
-    start = SCROLL_OFFSETS.cardStart
+    stagger = 0.14
   } = options;
 
   const ref = useRef<T | null>(null);
+  const animatedRef = useRef(new Set<HTMLElement>());
 
   useIsomorphicLayoutEffect(() => {
     const element = ref.current;
@@ -135,33 +65,43 @@ export function useStaggerAnimation<T extends HTMLElement>(
       return;
     }
 
-    const context = gsap.context(() => {
-      const targets = Array.from(element.querySelectorAll<HTMLElement>(selector));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
 
-      if (!targets.length) {
-        return;
-      }
+          const targets = Array.from(element.querySelectorAll<HTMLElement>(selector));
+          
+          targets.forEach((target, index) => {
+            // Skip if already animated
+            if (animatedRef.current.has(target)) return;
+            
+            animatedRef.current.add(target);
 
-      gsap.fromTo(
-        targets,
-        { autoAlpha: 0, y },
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration,
-          stagger,
-          ease: EASE.smooth,
-          scrollTrigger: {
-            trigger: element,
-            start,
-            once: true
-          }
-        }
-      );
-    }, element);
+            // Use CSS animations for performance
+            const delay = index * (stagger * 1000);
+            target.style.animation = `none`;
+            target.style.opacity = "0";
+            target.style.transform = `translateY(${y}px)`;
+            
+            setTimeout(() => {
+              target.style.transition = `opacity ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+              target.style.opacity = "1";
+              target.style.transform = "translateY(0)";
+            }, delay);
+          });
 
-    return () => context.revert();
-  }, [selector, y, duration, stagger, start, ...deps]);
+          // Stop observing after animation
+          observer.unobserve(element);
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [selector, y, duration, stagger, ...deps]);
 
   return ref;
 }

@@ -6,10 +6,10 @@ export default function ContactPage() {
   return (
     <>
       <Head>
-        <title>Contact | Kapra Web AI</title>
+        <title>Contact Kapra Web AI | Hire Custom AI Developers</title>
         <meta
           name="description"
-          content="Start a conversation with Kapra Web AI. Share the essentials and we will come back with the most sensible next move."
+          content="Ready to build custom AI workflows or mobile apps? Contact Kapra Web AI. Share your project details for a consultation with our development team."
         />
       </Head>
 

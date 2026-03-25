@@ -33,7 +33,7 @@ export function Journey() {
           <p className="font-mono text-[0.68rem] uppercase tracking-[0.4em] text-accent-300/85">
             Journey Overlay
           </p>
-          <p className="mt-4 text-base leading-8 text-white/72">
+          <p className="mt-4 text-base leading-8 text-foreground/72">
             This section stays synchronized to scroll. Add your own JPEG sequence later,
             or let the built-in preview carry the motion while you refine the story.
           </p>
@@ -57,7 +57,7 @@ export function Journey() {
             <p className="font-mono text-[0.68rem] uppercase tracking-[0.4em] text-accent-300/85">
               Ready for the next scene
             </p>
-            <h3 className="mt-3 font-display text-3xl text-white">
+            <h3 className="mt-3 font-display text-3xl text-foreground">
               Plug in the real frames, then make the copy unmistakably yours.
             </h3>
           </div>

@@ -1,0 +1,9 @@
+{
+  "project_name": "Kapra Web AI Landing Page",
+  "framework": "Next.js 16 (Pages Router)",
+  "language": "TypeScript",
+  "ui_library": "React 18",
+  "styling": "Tailwind CSS",
+  "ai_agent": "Antigravity",
+  "use_ralph_loop": true
+}

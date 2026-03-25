@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "../lib/utils";
-import { useIsCoarsePointer } from "../hooks/useIsCoarsePointer";
+import { useDeviceType } from "../hooks/useDeviceType";
+import { getGraphicsPreset } from "../utils/graphicsScale";
 
 interface GlobeProps {
   className?: string;
@@ -75,14 +76,16 @@ function project(
 export function NetworkGlobe({
   className,
   size,
-  dotColor = "rgba(100, 180, 255, ALPHA)",
-  arcColor = "rgba(100, 180, 255, 0.5)",
-  markerColor = "rgba(100, 220, 255, 1)",
+  dotColor = "rgba(160, 100, 220, ALPHA)",
+  arcColor = "rgba(229, 168, 75, 0.55)",
+  markerColor = "rgba(255, 200, 80, 1)",
   autoRotateSpeed = 0.002,
   connections = DEFAULT_CONNECTIONS,
   markers = DEFAULT_MARKERS
 }: GlobeProps) {
-  const isCoarsePointer = useIsCoarsePointer();
+  const { isMobile, isTablet } = useDeviceType();
+  const effectiveAutoRotateSpeed = isMobile ? 0 : autoRotateSpeed;
+  const preset = getGraphicsPreset(isMobile, isTablet);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotYRef = useRef(0.4);
   const rotXRef = useRef(0.3);
@@ -101,7 +104,7 @@ export function NetworkGlobe({
 
   useEffect(() => {
     const dots: [number, number, number][] = [];
-    const numDots = isCoarsePointer ? 450 : 900;
+    const numDots = preset.dotCount;
     const goldenRatio = (1 + Math.sqrt(5)) / 2;
 
     for (let index = 0; index < numDots; index += 1) {
@@ -115,7 +118,7 @@ export function NetworkGlobe({
     }
 
     dotsRef.current = dots;
-  }, [isCoarsePointer]);
+  }, [preset.dotCount]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -133,7 +136,7 @@ export function NetworkGlobe({
       return;
     }
 
-    const dpr = Math.min(window.devicePixelRatio || 1, isCoarsePointer ? 1 : 1.25);
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.25);
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (!width || !height) {
@@ -162,7 +165,7 @@ export function NetworkGlobe({
     const fov = 600;
 
     if (!dragRef.current.active) {
-      rotYRef.current += autoRotateSpeed;
+      rotYRef.current += effectiveAutoRotateSpeed * preset.animationSpeed;
     }
 
     timeRef.current += 0.015;
@@ -178,14 +181,14 @@ export function NetworkGlobe({
       cy,
       radius * 1.5
     );
-    glowGradient.addColorStop(0, "rgba(60, 140, 255, 0.03)");
-    glowGradient.addColorStop(1, "rgba(60, 140, 255, 0)");
+    glowGradient.addColorStop(0, `rgba(140, 70, 210, ${0.05 * preset.glowIntensity})`);
+    glowGradient.addColorStop(1, "rgba(140, 70, 210, 0)");
     context.fillStyle = glowGradient;
     context.fillRect(0, 0, width, height);
 
     context.beginPath();
     context.arc(cx, cy, radius, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(100, 180, 255, 0.06)";
+    context.strokeStyle = `rgba(229, 168, 75, ${0.10 * preset.glowIntensity})`;
     context.lineWidth = 1;
     context.stroke();
 
@@ -206,7 +209,7 @@ export function NetworkGlobe({
 
       const [screenX, screenY] = project(x, y, z, cx, cy, fov);
       const depthAlpha = Math.max(0.1, 1 - (z + radius) / (2 * radius));
-      const dotSize = 1 + depthAlpha * 0.8;
+      const dotSize = preset.markerSize / 2 + depthAlpha * 0.8;
 
       context.beginPath();
       context.arc(screenX, screenY, dotSize, 0, Math.PI * 2);
@@ -245,7 +248,7 @@ export function NetworkGlobe({
       context.moveTo(sx1, sy1);
       context.quadraticCurveTo(arcX, arcY, sx2, sy2);
       context.strokeStyle = arcColor;
-      context.lineWidth = 1.2;
+      context.lineWidth = preset.lineWidth;
       context.stroke();
 
       const travel = (Math.sin(time * 1.2 + lat1 * 0.1) + 1) / 2;
@@ -277,17 +280,17 @@ export function NetworkGlobe({
       const pulse = Math.sin(time * 2 + marker.lat) * 0.5 + 0.5;
 
       context.beginPath();
-      context.arc(screenX, screenY, 4 + pulse * 4, 0, Math.PI * 2);
+      context.arc(screenX, screenY, preset.markerSize + pulse * preset.markerSize, 0, Math.PI * 2);
       context.strokeStyle = markerColor.replace("1)", `${0.2 + pulse * 0.15})`);
       context.lineWidth = 1;
       context.stroke();
 
       context.beginPath();
-      context.arc(screenX, screenY, 2.5, 0, Math.PI * 2);
+      context.arc(screenX, screenY, preset.markerSize * 0.625, 0, Math.PI * 2);
       context.fillStyle = markerColor;
       context.fill();
 
-      if (marker.label) {
+      if (marker.label && !isMobile) {
         context.font = "10px system-ui, sans-serif";
         context.fillStyle = markerColor.replace("1)", "0.6)");
         context.fillText(marker.label, screenX + 8, screenY + 3);
@@ -295,7 +298,7 @@ export function NetworkGlobe({
     }
 
     animRef.current = requestAnimationFrame(draw);
-  }, [arcColor, autoRotateSpeed, connections, dotColor, isCoarsePointer, markerColor, markers]);
+  }, [arcColor, effectiveAutoRotateSpeed, connections, dotColor, preset, markerColor, markers, isMobile]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -1,11 +1,12 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useRouter } from "next/router"
 import { LucideIcon } from "lucide-react"
 import { cn } from "../lib/utils"
+import { useTheme } from "../hooks/useTheme"
 
 interface NavItem {
   name: string
@@ -19,8 +20,9 @@ interface NavBarProps {
 }
 
 export function NavBar({ items, className }: NavBarProps) {
-  const pathname = usePathname()
-  const [isMobile, setIsMobile] = useState(false)
+  const { asPath } = useRouter()
+  const { mounted } = useTheme()
+  const pathname = asPath.split(/[?#]/)[0] || "/"
 
   // Match active item by pathname
   const activeTab = items.find((item) => {
@@ -28,21 +30,19 @@ export function NavBar({ items, className }: NavBarProps) {
     return itemPath === pathname
   })?.name ?? items[0].name
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-6 sm:top-6 sm:bottom-auto z-50 flex justify-center pointer-events-none",
+        "fixed inset-x-0 bottom-6 sm:bottom-auto sm:top-8 z-50 flex justify-center pointer-events-none sm:h-24 lg:h-28 sm:items-center",
         className,
       )}
     >
-      <div className="pointer-events-auto flex items-center gap-1 sm:gap-3 bg-white/[0.04] border border-white/10 backdrop-blur-2xl py-1 px-1 rounded-full shadow-glass">
+      <div className="pointer-events-auto flex items-center gap-1 sm:gap-3 bg-foreground/[0.04] border border-foreground/10 backdrop-blur-2xl py-1 px-1 rounded-full shadow-glass"
+        style={{
+          backgroundColor: `var(--glass-bg)`,
+          borderColor: `var(--glass-border)`,
+        }}
+      >
         {items.map((item) => {
           const Icon = item.icon
           const isActive = activeTab === item.name
@@ -53,9 +53,11 @@ export function NavBar({ items, className }: NavBarProps) {
               href={item.url}
               className={cn(
                 "relative rounded-full px-4 py-2 font-body text-sm font-medium tracking-[0.02em] transition-colors sm:px-6",
-                "text-white/60 hover:text-white",
-                isActive && "bg-white/10 text-white",
               )}
+              style={{
+                color: isActive ? "var(--foreground)" : "var(--muted)",
+                backgroundColor: isActive ? "var(--glass-bg)" : undefined,
+              }}
             >
               <span className="hidden md:inline">{item.name}</span>
               <span className="md:hidden">
